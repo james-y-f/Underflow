@@ -30,6 +30,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] Entity Enemy;
     [SerializeField] EntityBaseStats PlayerBaseStats;
     [SerializeField] EntityBaseStats EnemyBaseStats;
+    [SerializeField] StackDisplay PlayerStackDisplay;
+    [SerializeField] StackDisplay EnemyStackDisplay;
 
     // --- UI References ---
     [SerializeField] bool consoleActive = false;
@@ -56,8 +58,10 @@ public class BattleManager : MonoBehaviour
 
         InputActions = new PlayerInputActions();
 
-        Player = new Entity(PlayerBaseStats, true);
-        Enemy = new Entity(EnemyBaseStats, false);
+        Assert.IsNotNull(PlayerStackDisplay);
+        Assert.IsNotNull(EnemyStackDisplay);
+        Player = new Entity(PlayerBaseStats, true, PlayerStackDisplay);
+        Enemy = new Entity(EnemyBaseStats, false, EnemyStackDisplay);
         console.gameObject.SetActive(consoleActive);
     }
 
@@ -78,6 +82,10 @@ public class BattleManager : MonoBehaviour
         // Keep input field focused
         consoleInput.ActivateInputField();
         consoleInput.Select();
+
+        Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+
         CurrentState = BattleState.Setup;
         SetupGame();
     }
@@ -87,10 +95,6 @@ public class BattleManager : MonoBehaviour
     void SetupGame()
     {
         Log("Setting up game...");
-
-        // Populate and shuffle player deck
-
-        // Populate and shuffle enemy deck
 
         ReloadDisplays();
 
@@ -102,7 +106,6 @@ public class BattleManager : MonoBehaviour
         if (gameIsOver) return;
         CurrentState = BattleState.PlayerTurn;
         Player.ResetEnergy();
-        // TODO: move this somewhere else when ready
         Enemy.ResetEnergy();
         Log("\n--- Your Turn ---");
         UpdateDisplay();
@@ -293,7 +296,7 @@ public class BattleManager : MonoBehaviour
             return false;
         }
         target.Stack.Swap(a, b, hard, bypassSwappability);
-        // target.StackDisplay.Swap(a, b);
+        target.StackDisplay.Swap(a, b);
         Log("swap successful");
         return true;
     }
@@ -314,13 +317,6 @@ public class BattleManager : MonoBehaviour
             ExecuteCardEffects(nextCard, source);
             UpdateDisplay();
         }
-    }
-
-
-    // Executes cards until there is not sufficient energy to execute the next card
-    void ExecuteTurnHelper(ref Deck stack, ref Deck discard, ref int energy, Entity source)
-    {
-
     }
 
     void ExecuteCardEffects(Card card, Entity source)
@@ -434,17 +430,17 @@ public class BattleManager : MonoBehaviour
 
     void ReloadDisplays()
     {
-        // Player.StackDisplay.Clear();
-        // Enemy.StackDisplay.Clear();
+        Player.StackDisplay.Clear();
+        Enemy.StackDisplay.Clear();
         int playerViewSize = Math.Min(Player.ViewSize, Player.Stack.Count);
         int enemyViewSize = Math.Min(Enemy.ViewSize, Enemy.Stack.Count);
         for (int i = 0; i < playerViewSize; i++)
         {
-            // Player.StackDisplay.InsertCard(Player.Stack[i].Info);
+            Player.StackDisplay.InsertCard(Player.Stack[i].Info);
         }
         for (int i = 0; i < enemyViewSize; i++)
         {
-            // Enemy.StackDisplay.InsertCard(Enemy.Stack[i].Info);
+            Enemy.StackDisplay.InsertCard(Enemy.Stack[i].Info);
         }
     }
 

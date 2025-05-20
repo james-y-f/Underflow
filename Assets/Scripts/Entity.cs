@@ -6,9 +6,9 @@ public class Entity
     public EntityBaseStats BaseStats;
     public string Name;
     public bool IsPlayer;
-    [SerializeField] public Deck Stack;
-    [SerializeField] public Deck Discard;
-    [SerializeField] public Deck Exile;
+    public Deck Stack;
+    public Deck Discard;
+    public Deck Exile;
     public int BaseViewSize;
     public int ViewSizeModifier;
     public int ViewSize
@@ -21,8 +21,9 @@ public class Entity
     public int CarryOverEnergy;
     public int CurrentEnergy;
     public bool ShuffleAtStart;
+    public StackDisplay StackDisplay;
 
-    public Entity(EntityBaseStats baseStats, bool isPlayer)
+    public Entity(EntityBaseStats baseStats, bool isPlayer, StackDisplay stackDisplay)
     {
         BaseStats = baseStats;
         IsPlayer = isPlayer;
@@ -41,6 +42,7 @@ public class Entity
         // For now, the player's stack is by default swappale and the enemy is not
         // every other deck (discard, exile) is by default swappable
         Stack.Swappable = isPlayer;
+        StackDisplay = stackDisplay;
     }
 
     public void ResetTemporaryStats()

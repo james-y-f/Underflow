@@ -10,7 +10,6 @@ public class StackDisplay : MonoBehaviour
 {
     public UnityEvent<bool, int, int> SwapAttempt;
     public int BaseViewSize = 7;
-    public int WindowSize;
     public bool DeckSwappable = true;
     [SerializeField] GameObject CardPrefab;
     [SerializeField] bool IsPlayer;
@@ -19,7 +18,6 @@ public class StackDisplay : MonoBehaviour
     [SerializeField] List<GameObject> CardObjects;
     List<Vector3> CardPos;
     int LastViewSize;
-    int CurrentViewSize;
 
     GameObject HoveredCard;
     GameObject HeldCardObject;
@@ -34,7 +32,6 @@ public class StackDisplay : MonoBehaviour
         CardObjects = new List<GameObject>();
         // precalculate the position for the first {ViewSize} cards
         CalcCardPos(BaseViewSize);
-        CurrentViewSize = BaseViewSize;
         LastViewSize = BaseViewSize + 1; // calcCardPos trigger when first called
     }
 
@@ -56,8 +53,7 @@ public class StackDisplay : MonoBehaviour
         controller.CardHeld.AddListener(HandleCardHeld);
         controller.CardDrop.AddListener(HandleCardDrop);
         controller.CardUnHover.AddListener(HandleCardUnHover);
-        CardDisplay display = card.GetComponent<CardDisplay>();
-        display.UpdateDisplay(info);
+        controller.Info = info;
         CardObjects.Insert(index, card);
         UpdateCardLocations();
     }

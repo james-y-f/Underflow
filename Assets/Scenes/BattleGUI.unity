@@ -829,8 +829,46 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CurrentState: 0
+  Player:
+    BaseStats: {fileID: 0}
+    Name: 
+    IsPlayer: 0
+    Stack:
+      Swappable: 1
+    Discard:
+      Swappable: 1
+    Exile:
+      Swappable: 1
+    BaseViewSize: 0
+    ViewSizeModifier: 0
+    BaseEnergy: 0
+    EnergyModifier: 0
+    CarryOverEnergy: 0
+    CurrentEnergy: 0
+    ShuffleAtStart: 0
+    StackDisplay: {fileID: 0}
+  Enemy:
+    BaseStats: {fileID: 0}
+    Name: 
+    IsPlayer: 0
+    Stack:
+      Swappable: 1
+    Discard:
+      Swappable: 1
+    Exile:
+      Swappable: 1
+    BaseViewSize: 0
+    ViewSizeModifier: 0
+    BaseEnergy: 0
+    EnergyModifier: 0
+    CarryOverEnergy: 0
+    CurrentEnergy: 0
+    ShuffleAtStart: 0
+    StackDisplay: {fileID: 0}
   PlayerBaseStats: {fileID: 11400000, guid: 8b37f14826c0e4b12993da025d776b6c, type: 2}
   EnemyBaseStats: {fileID: 11400000, guid: 7f6849c626e9d4621b016e160ef4320a, type: 2}
+  PlayerStackDisplay: {fileID: 1285130763}
+  EnemyStackDisplay: {fileID: 718828265}
   consoleActive: 0
   console: {fileID: 1192315762}
   consoleInput: {fileID: 689824792}
@@ -1403,6 +1441,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 718828264}
+  - component: {fileID: 718828265}
   m_Layer: 0
   m_Name: EnemyStack
   m_TagString: EnemyStack
@@ -1427,6 +1466,26 @@ Transform:
   - {fileID: 186803203}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &718828265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 718828262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2661d4b1a32d47369d13e5e184e18bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SwapAttempt:
+    m_PersistentCalls:
+      m_Calls: []
+  BaseViewSize: 7
+  DeckSwappable: 0
+  CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
+  IsPlayer: 0
+  CardObjects: []
 --- !u!1 &729577347
 GameObject:
   m_ObjectHideFlags: 0
@@ -2147,6 +2206,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1285130762}
+  - component: {fileID: 1285130763}
   m_Layer: 0
   m_Name: PlayerStack
   m_TagString: PlayerStack
@@ -2171,6 +2231,26 @@ Transform:
   - {fileID: 658788234}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1285130763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1285130760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2661d4b1a32d47369d13e5e184e18bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SwapAttempt:
+    m_PersistentCalls:
+      m_Calls: []
+  BaseViewSize: 7
+  DeckSwappable: 1
+  CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
+  IsPlayer: 1
+  CardObjects: []
 --- !u!1 &1312442268
 GameObject:
   m_ObjectHideFlags: 0

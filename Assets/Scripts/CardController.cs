@@ -8,8 +8,10 @@ public class CardController : MonoBehaviour
     public UnityEvent CardDrop;
     public UnityEvent CardUnHover;
     public StackDisplay ParentStack;
+    public CardInfo Info;
     public bool Swappable = true;
     Vector3 MouseOffset;
+    CardDisplay Display;
     CardMotor Motor;
 
     bool Hovering;
@@ -20,6 +22,12 @@ public class CardController : MonoBehaviour
         Held = false;
         Hovering = false;
         Motor = GetComponent<CardMotor>();
+        Display = GetComponent<CardDisplay>();
+    }
+
+    void Start()
+    {
+        Display.UpdateDisplay(Info);
     }
 
     private Vector3 CalcScreenPos()
