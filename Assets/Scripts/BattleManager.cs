@@ -4,8 +4,6 @@ using System.Text;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Assertions;
-
-using Deck = System.Collections.Generic.List<CardTemplate>;
 using System;
 using UnityEngine.InputSystem;
 
@@ -24,39 +22,15 @@ public class BattleManager : MonoBehaviour
         GameOver
     }
 
-    public enum Entity
-    {
-        Undefined,
-        Player,
-        Enemy
-    }
-
     public BattleState CurrentState;
     private bool gameIsOver = false;
 
 
-    // --- Player Variables ---
-    public Deck playerMasterDeck; // Assign Card ScriptableObjects here in the Inspector
-    public Deck playerStack;
-    public Deck playerDiscard;
+    [SerializeField] Entity Player;
+    [SerializeField] Entity Enemy;
+    [SerializeField] EntityBaseStats PlayerBaseStats;
+    [SerializeField] EntityBaseStats EnemyBaseStats;
 
-    private int playerMaxViewSize = 7;
-    private int enemyMaxViewSize = 7;
-    private int playerBaseEnergy = 3; // Base energy gained each turn
-    private int playerCarryOverEnergy = 0;
-    private int playerCurrentEnergy = 0;
-
-    // --- Enemy Variables ---
-    public Deck enemyMasterDeck; // Assign Card ScriptableObjects here in the Inspector
-    public Deck enemyStack;
-    public Deck enemyDiscard;
-
-    public int enemyBaseEnergy = 2; // Base energy gained each turn
-    public int enemyCarryOverEnergy = 0;
-    public int enemyCurrentEnergy = 0;
-
-    [SerializeField] StackDisplay playerDisplay;
-    [SerializeField] StackDisplay enemyDisplay;
     // --- UI References ---
     [SerializeField] bool consoleActive = false;
     [SerializeField] Canvas console;
@@ -82,15 +56,8 @@ public class BattleManager : MonoBehaviour
 
         InputActions = new PlayerInputActions();
 
-        playerStack = new Deck();
-        playerDiscard = new Deck();
-        enemyStack = new Deck();
-        enemyDiscard = new Deck();
-
-        playerDisplay.BaseViewSize = playerMaxViewSize;
-        enemyDisplay.BaseViewSize = enemyMaxViewSize;
-        playerDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
-        enemyDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        Player = new Entity(PlayerBaseStats, true);
+        Enemy = new Entity(EnemyBaseStats, false);
         console.gameObject.SetActive(consoleActive);
     }
 
@@ -122,12 +89,8 @@ public class BattleManager : MonoBehaviour
         Log("Setting up game...");
 
         // Populate and shuffle player deck
-        playerStack.AddRange(playerMasterDeck);
-        Shuffle(ref playerStack);
 
         // Populate and shuffle enemy deck
-        enemyStack.AddRange(enemyMasterDeck);
-        Shuffle(ref enemyStack);
 
         ReloadDisplays();
 
@@ -138,12 +101,10 @@ public class BattleManager : MonoBehaviour
     {
         if (gameIsOver) return;
         CurrentState = BattleState.PlayerTurn;
-        playerCurrentEnergy = playerBaseEnergy + playerCarryOverEnergy; // Gain
-        enemyCurrentEnergy = enemyBaseEnergy + enemyCarryOverEnergy; // Enemy gains energy here so player can predict enemy's next turn
+        Player.ResetEnergy();
+        // TODO: move this somewhere else when ready
+        Enemy.ResetEnergy();
         Log("\n--- Your Turn ---");
-        Log($"Gained {playerBaseEnergy} base energy and {playerCarryOverEnergy} carryover energy.");
-        playerCarryOverEnergy = 0;
-        enemyCarryOverEnergy = 0;
         UpdateDisplay();
         Log($"Enter command: {VALID_COMMANDS}");
 
@@ -166,7 +127,7 @@ public class BattleManager : MonoBehaviour
         CurrentState = BattleState.PlayerExecution;
         Log("\n--- Executing Jobs ---");
         UpdateDisplay();
-        ExecuteTurn(Entity.Player);
+        ExecuteTurn(Player);
         if (gameIsOver) return;
 
         // Transition to Enemy Turn
@@ -180,7 +141,7 @@ public class BattleManager : MonoBehaviour
         CurrentState = BattleState.EnemyTurn;
         Log("\n--- Enemy Turn ---");
         UpdateDisplay(); // Show state before enemy action
-        ExecuteTurn(Entity.Enemy);
+        ExecuteTurn(Enemy);
         if (gameIsOver) return;
 
         // Transition back to Player Turn
@@ -193,18 +154,18 @@ public class BattleManager : MonoBehaviour
         {
             return true;
         }
-        if (enemyStack.Count == 0 && playerStack.Count == 0)
+        if (Enemy.Stack.Count == 0 && Player.Stack.Count == 0)
         {
             Debug.LogError("Tie, This probably shouldn't happen");
             GameOver("TIE?");
             return true;
         }
-        else if (enemyStack.Count == 0)
+        else if (Enemy.Stack.Count == 0)
         {
             GameOver("YOU WIN! ENEMY STACK DEPLETED!");
             return true;
         }
-        else if (playerStack.Count == 0)
+        else if (Player.Stack.Count == 0)
         {
             GameOver("YOU LOST! YOUR STACK IS DEPLETED!");
             return true;
@@ -251,7 +212,7 @@ public class BattleManager : MonoBehaviour
             case "s":
                 if (parts.Length > 2 && int.TryParse(parts[1], out int idx1) && int.TryParse(parts[2], out int idx2))
                 {
-                    commandSuccess = Swap(Entity.Player, idx1, idx2);
+                    commandSuccess = SwapStack(Player, idx1, idx2, true, true, true);
                 }
                 else
                 {
@@ -318,116 +279,80 @@ public class BattleManager : MonoBehaviour
 
     // --- Core Mechanics Implementation ---
 
-    public bool Swap(Entity target, int a, int b)
+    public bool SwapStack(Entity target, int a, int b, bool hard = false, bool bypassSwappability = false, bool bypassViewSize = false)
     {
-        Assert.AreNotEqual(target, Entity.Undefined);
-        bool isPlayer = target == Entity.Player;
-        Deck targetDeck = isPlayer ? playerStack : enemyStack;
-        StackDisplay display = isPlayer ? playerDisplay : enemyDisplay;
-
-        int maxIdx = isPlayer ? playerMaxViewSize : enemyMaxViewSize; // cannot operate on cards out of view
-        maxIdx = Math.Min(maxIdx, targetDeck.Count); // cannot operate on cards exceeding current size of deck
+        Assert.IsNotNull(target);
+        int maxIdx = Math.Min(target.ViewSize, target.Stack.Count); // cannot operate on cards exceeding current size of deck
+        if (bypassViewSize)
+        {
+            maxIdx = target.Stack.Count;
+        }
         if (a < 0 || b < 0 || a >= maxIdx || b >= maxIdx)
         {
             Log("invalid index for swap");
             return false;
         }
-        CardTemplate temp = targetDeck[a];
-        targetDeck[a] = targetDeck[b];
-        targetDeck[b] = temp;
-        Log($"Battle Manager Swapped {a}: {targetDeck[b].GetDisplayText()} with {b}: {targetDeck[a].GetDisplayText()}");
-        display.Swap(a, b);
+        target.Stack.Swap(a, b, hard, bypassSwappability);
+        // target.StackDisplay.Swap(a, b);
+        Log("swap successful");
         return true;
     }
 
     void ExecuteTurn(Entity source)
     {
-        Assert.AreNotEqual(source, Entity.Undefined);
-        switch (source)
-        {
-            case Entity.Player:
-                ExecuteTurnHelper(ref playerStack, ref playerDiscard, ref playerCurrentEnergy, source);
-                break;
-            case Entity.Enemy:
-                ExecuteTurnHelper(ref enemyStack, ref enemyDiscard, ref enemyCurrentEnergy, source);
-                break;
-            default:
-                Debug.LogError("something went very wrong, invalid entity on execute turn");
-                break;
-        }
-    }
-
-    // Executes cards until there is not sufficient energy to execute the next card
-    void ExecuteTurnHelper(ref Deck stack, ref Deck discard, ref int energy, Entity source)
-    {
+        Assert.IsNotNull(source);
         while (true)
         {
-            if (CheckGameOver()) { return; }
+            if (CheckGameOver()) return;
             // we know at this point that both stack still has cards remaining
-            CardTemplate nextCard = stack[0];
-            if (nextCard.energyCost > energy) { return; }
-            energy -= nextCard.energyCost;
-            stack.RemoveAt(0);
-            discard.Add(nextCard);
-            Log($"Executing: {nextCard.title}");
+            Card nextCard = source.Stack[0];
+            if (nextCard.Info.EnergyCost > source.CurrentEnergy) return;
+            source.CurrentEnergy -= nextCard.Info.EnergyCost;
+            source.Stack.RemoveAt(0);
+            source.Discard.Add(nextCard);
+            Log($"Executing: {nextCard.Info.Title}");
             ExecuteCardEffects(nextCard, source);
             UpdateDisplay();
         }
     }
 
-    void ExecuteCardEffects(CardTemplate card, Entity source)
+
+    // Executes cards until there is not sufficient energy to execute the next card
+    void ExecuteTurnHelper(ref Deck stack, ref Deck discard, ref int energy, Entity source)
     {
-        foreach (CardEffect effect in card.effects)
+
+    }
+
+    void ExecuteCardEffects(Card card, Entity source)
+    {
+        foreach (CardEffect effect in card.Effects)
         {
-            switch (effect.type)
+            Entity target = ResolveTarget(source, effect.Target);
+            Assert.IsNotNull(target);
+            switch (effect.Type)
             {
                 case EffectType.NoEffect:
                     break;
 
                 case EffectType.Delete:
-                    Entity deleteTarget = ResolveTarget(source, effect.target);
-                    Delete(effect.values[0], deleteTarget, effect.mode);
+                    Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode);
                     break;
 
                 case EffectType.Add:
-                    Entity addTarget = ResolveTarget(source, effect.target);
-                    Add(effect.referenceCard, effect.values[0], addTarget, effect.mode);
+                    Add(new Card(effect.ReferenceCardTemplate), ResolveValue(source, effect.Values[0]), target, effect.Mode);
                     break;
 
-                case EffectType.GainEnergy:
-                    Entity gainTarget = ResolveTarget(source, effect.target);
-                    Assert.AreNotEqual(gainTarget, Entity.Undefined);
-                    int gainAmount = effect.values[0];
-                    Assert.IsTrue(gainAmount > 0);
-                    if (gainTarget == Entity.Player)
-                    {
-                        playerCurrentEnergy += gainAmount;
-                    }
-                    else
-                    {
-                        enemyCurrentEnergy += gainAmount;
-                    }
+                case EffectType.ModEnergy:
+                    target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
                     break;
 
-                case EffectType.GainEnergyNextTurn:
-                    Entity gainNextTarget = ResolveTarget(source, effect.target);
-                    Assert.AreNotEqual(gainNextTarget, Entity.Undefined);
-                    int gainNextAmount = effect.values[0];
-                    Assert.IsTrue(gainNextAmount > 0);
-                    if (gainNextTarget == Entity.Player)
-                    {
-                        playerCarryOverEnergy += gainNextAmount;
-                    }
-                    else
-                    {
-                        enemyCarryOverEnergy += gainNextAmount;
-                    }
+                case EffectType.ModEnergyNextTurn:
+                    target.CarryOverEnergy += ResolveValue(source, effect.Values[0]);
                     break;
 
                 // Add more cases here for other effects
                 default:
-                    Log($"Effect type '{effect.type}' not implemented.");
-                    Debug.LogError($"Effect type '{effect.type}' not implemented.");
+                    Debug.LogError($"Effect type '{effect.Type}' not implemented.");
                     break;
             }
         }
@@ -435,60 +360,30 @@ public class BattleManager : MonoBehaviour
 
     void Delete(int amount, Entity target, EffectMode mode)
     {
-        Assert.IsTrue(amount > 0);
-        Assert.AreNotEqual(target, Entity.Undefined);
-        Log($"Deleting {amount} cards from {Entity2Str(target)}");
-        switch (target)
-        {
-            case Entity.Player:
-                DeleteHelper(amount, ref playerStack, ref playerDiscard, mode);
-                return;
-            case Entity.Enemy:
-                DeleteHelper(amount, ref enemyStack, ref enemyDiscard, mode);
-                return;
-            default:
-                Debug.LogError("No target for deletion");
-                return;
-        }
-    }
-
-    void DeleteHelper(int amount, ref Deck target, ref Deck targetDiscard, EffectMode mode)
-    {
+        if (amount < 1) return;
+        Assert.IsNotNull(target);
+        Log($"Deleted {amount} cards from {target.Name}");
         for (int i = 0; i < amount; i++)
         {
             if (CheckGameOver()) { return; }
             // we now know that there are for sure cards left in target deck 
-            int deleteIdx = ResolveIndex(mode, target.Count);
-            CardTemplate deleted = target[deleteIdx];
-            target.RemoveAt(deleteIdx);
-            targetDiscard.Add(deleted);
-            Log($"deleted {deleteIdx}: {deleted.title}");
+            int deleteIdx = ResolveIndex(mode, target.Stack.Count);
+            Card deleted = target.Stack[deleteIdx];
+            target.Stack.RemoveAt(deleteIdx);
+            target.Discard.Add(deleted);
+            Log($"deleted {deleteIdx}: {deleted.Info.GetDisplayText()}");
         }
     }
 
-    void Add(CardTemplate card, int amount, Entity target, EffectMode mode)
+    void Add(Card card, int amount, Entity target, EffectMode mode)
     {
-        Assert.AreNotEqual(target, Entity.Undefined);
-        Assert.IsTrue(amount > 0);
-        Deck targetDeck = target == Entity.Player ? playerStack : enemyStack;
+        if (amount < 1) return;
+        Assert.IsNotNull(target);
         for (int i = 0; i < amount; i++)
         {
-            int addIdx = ResolveIndex(mode, targetDeck.Count);
-            targetDeck.Insert(addIdx, card);
-            Log($"added {card.title} to {addIdx}");
-        }
-    }
-
-    void Shuffle(ref Deck stack)
-    {
-        int n = stack.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = UnityEngine.Random.Range(0, n);
-            CardTemplate temp = stack[k];
-            stack[k] = stack[n];
-            stack[n] = temp;
+            int addIdx = ResolveIndex(mode, target.Stack.Count);
+            target.Stack.Insert(addIdx, card);
+            Log($"added {card.Info.Title} to {addIdx}");
         }
     }
 
@@ -496,9 +391,9 @@ public class BattleManager : MonoBehaviour
 
     void HandleSwapAttempt(bool IsPlayer, int currentIndex, int targetIndex)
     {
-        Entity targetEntity = IsPlayer ? Entity.Player : Entity.Enemy;
+        Entity targetEntity = IsPlayer ? Player : Enemy;
         Debug.Log($"processing swap from handler, {currentIndex}, {targetIndex}");
-        Swap(targetEntity, currentIndex, targetIndex);
+        SwapStack(targetEntity, currentIndex, targetIndex);
     }
 
     // --- Helper Functions ---
@@ -526,48 +421,48 @@ public class BattleManager : MonoBehaviour
         // Consoles
         // Player
         StringBuilder sb = new StringBuilder();
-        sb.Append($"player: ({playerStack.Count}) [{playerCurrentEnergy}] <{playerMaxViewSize}>\n");
-        sb.Append(PrintDeckContent(playerStack));
+        sb.Append($"player: ({Player.Stack.Count}) [{Player.CurrentEnergy}] <{Player.ViewSize}>\n");
+        sb.Append(PrintDeckContent(Player.Stack));
         playerConsole.text = sb.ToString();
 
         // Enemy
         sb.Clear();
-        sb.Append($"enemy: ({enemyStack.Count}) [{enemyCurrentEnergy}] <{enemyMaxViewSize}>\n");
-        sb.Append(PrintDeckContent(enemyStack));
+        sb.Append($"enemy: ({Enemy.Stack.Count}) [{Enemy.CurrentEnergy}] <{Enemy.ViewSize}>\n");
+        sb.Append(PrintDeckContent(Enemy.Stack));
         enemyConsole.text = sb.ToString();
     }
 
     void ReloadDisplays()
     {
-        playerDisplay.Clear();
-        enemyDisplay.Clear();
-        int playerViewSize = Math.Min(playerMaxViewSize, playerStack.Count);
-        int enemyViewSize = Math.Min(enemyMaxViewSize, enemyStack.Count);
+        // Player.StackDisplay.Clear();
+        // Enemy.StackDisplay.Clear();
+        int playerViewSize = Math.Min(Player.ViewSize, Player.Stack.Count);
+        int enemyViewSize = Math.Min(Enemy.ViewSize, Enemy.Stack.Count);
         for (int i = 0; i < playerViewSize; i++)
         {
-            playerDisplay.InsertCard(playerStack[i]);
+            // Player.StackDisplay.InsertCard(Player.Stack[i].Info);
         }
         for (int i = 0; i < enemyViewSize; i++)
         {
-            enemyDisplay.InsertCard(enemyStack[i]);
+            // Enemy.StackDisplay.InsertCard(Enemy.Stack[i].Info);
         }
     }
 
     Entity ResolveTarget(Entity source, EffectTarget target)
     {
-        Assert.AreNotEqual(source, Entity.Undefined);
+        Assert.IsNotNull(source);
         switch (target)
         {
             case EffectTarget.Self:
                 return source;
             case EffectTarget.Opponent:
-                if (source == Entity.Player)
+                if (source == Player)
                 {
-                    return Entity.Enemy;
+                    return Enemy;
                 }
-                return Entity.Player;
+                return Player;
             default:
-                return Entity.Undefined;
+                return null;
         }
     }
 
@@ -594,7 +489,7 @@ public class BattleManager : MonoBehaviour
             Log($"Invalid card index: {idx + 1}. Choose a number between 1 and {target.Count}.");
             return false;
         }
-        Log(target[idx].GetDescription());
+        Log(target[idx].Info.GetDescription());
         return true;
     }
 
@@ -606,26 +501,13 @@ public class BattleManager : MonoBehaviour
         }
         StringBuilder str = new StringBuilder();
         int limit = Math.Min(lines, target.Count);
-        for (int i = 1; i <= limit; i++)
+        for (int i = 0; i < limit; i++)
         {
-            str.Append($"{i}. {target[i - 1].GetDisplayText()}\n");
+            str.Append($"{i}. {target[i].Info.GetDisplayText()}\n");
         }
         return str.ToString();
     }
 
-    string Entity2Str(Entity input)
-    {
-        switch (input)
-        {
-            case Entity.Player:
-                return "Player";
-            case Entity.Enemy:
-                return "Enemy";
-            case Entity.Undefined:
-            default:
-                return "Undefined";
-        }
-    }
 
     Deck Str2Deck(string input)
     {
@@ -635,22 +517,32 @@ public class BattleManager : MonoBehaviour
             case "stack":
             case "ps":
             case "s":
-                return playerStack;
+                return Player.Stack;
             case "enemystack":
             case "es":
-                return enemyStack;
+                return Enemy.Stack;
             case "playerdiscard":
             case "discard":
             case "pd":
             case "d":
-                return playerDiscard;
+                return Player.Discard;
             case "enemydiscard":
             case "ed":
-                return enemyDiscard;
+                return Enemy.Discard;
             default:
                 Debug.LogError("invalid input for str2Deck");
                 return null;
         }
+    }
+
+    int ResolveValue(Entity source, EffectValue value)
+    {
+        if (value.Type == ValueType.Constant)
+        {
+            return value.Constant;
+        }
+        // FIXME: finish this
+        return 0;
     }
 
     IEnumerator ScrollToBottom()

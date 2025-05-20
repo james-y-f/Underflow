@@ -10,6 +10,7 @@ public class StackDisplay : MonoBehaviour
 {
     public UnityEvent<bool, int, int> SwapAttempt;
     public int BaseViewSize = 7;
+    public int WindowSize;
     public bool DeckSwappable = true;
     [SerializeField] GameObject CardPrefab;
     [SerializeField] bool IsPlayer;
@@ -20,14 +21,11 @@ public class StackDisplay : MonoBehaviour
     int LastViewSize;
     int CurrentViewSize;
 
-
     GameObject HoveredCard;
     GameObject HeldCardObject;
     Coroutine HoldingCardCoroutine;
 
 
-    // for testing
-    [SerializeField] CardTemplate testTemplate;
     void Awake()
     {
         Assert.IsNotNull(CardPrefab);
@@ -40,18 +38,17 @@ public class StackDisplay : MonoBehaviour
         LastViewSize = BaseViewSize + 1; // calcCardPos trigger when first called
     }
 
-    public void InsertCard(CardTemplate template, int index = -1)
+    public void InsertCard(CardInfo info, int index = -1)
     {
         if (index == -1)
         {
             index = CardObjects.Count(); // default to inserting at the end
         }
         Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        Assert.IsNotNull(template);
         GameObject card = Instantiate(CardPrefab, transform.position, CardPrefab.transform.rotation);
         card.tag = IsPlayer ? "PlayerCard" : "EnemyCard";
         card.layer = IsPlayer ? LayerMask.NameToLayer("PlayerCards") : LayerMask.NameToLayer("EnemyCards");
-        card.name = template.title;
+        card.name = info.Title;
         CardController controller = card.GetComponent<CardController>();
         controller.ParentStack = this;
         controller.CardDrop.AddListener(UpdateCardLocations);
@@ -60,7 +57,7 @@ public class StackDisplay : MonoBehaviour
         controller.CardDrop.AddListener(HandleCardDrop);
         controller.CardUnHover.AddListener(HandleCardUnHover);
         CardDisplay display = card.GetComponent<CardDisplay>();
-        display.UpdateDisplay(template);
+        display.UpdateDisplay(info);
         CardObjects.Insert(index, card);
         UpdateCardLocations();
     }

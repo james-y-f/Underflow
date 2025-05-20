@@ -1,10 +1,12 @@
-using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "EntityStats", menuName = "Scriptable Objects/EntityStats")]
+[System.Serializable]
+[CreateAssetMenu(fileName = "New Entity Stats", menuName = "Entity Stats")]
 public class EntityBaseStats : ScriptableObject
 {
-    public int BASE_ENERGY;
-    public int BASE_VIEWSIZE;
-    public List<CardTemplate> STARTING_DECK;
+    public string Name;
+    public int BaseViewSize;
+    public int BaseEnergy;
+    public DeckTemplate Deck;
+    public bool ShuffleAtStart;
 }

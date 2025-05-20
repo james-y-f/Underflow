@@ -828,59 +828,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c048459028a3415aacc85c8f096e65e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentState: 0
-  playerMasterDeck:
-  - {fileID: 11400000, guid: c43906e095d154570928da546fbda867, type: 2}
-  - {fileID: 11400000, guid: c43906e095d154570928da546fbda867, type: 2}
-  - {fileID: 11400000, guid: c43906e095d154570928da546fbda867, type: 2}
-  - {fileID: 11400000, guid: c43906e095d154570928da546fbda867, type: 2}
-  - {fileID: 11400000, guid: c43906e095d154570928da546fbda867, type: 2}
-  - {fileID: 11400000, guid: cf76af033931c49e3b68b8cd479d99e0, type: 2}
-  - {fileID: 11400000, guid: cf76af033931c49e3b68b8cd479d99e0, type: 2}
-  - {fileID: 11400000, guid: cf76af033931c49e3b68b8cd479d99e0, type: 2}
-  - {fileID: 11400000, guid: a67f3675e20694689b867a6aa7f53281, type: 2}
-  - {fileID: 11400000, guid: a67f3675e20694689b867a6aa7f53281, type: 2}
-  - {fileID: 11400000, guid: a67f3675e20694689b867a6aa7f53281, type: 2}
-  - {fileID: 11400000, guid: a1e8da3d13a4047fe83e1a24a4f96362, type: 2}
-  - {fileID: 11400000, guid: a1e8da3d13a4047fe83e1a24a4f96362, type: 2}
-  - {fileID: 11400000, guid: a1e8da3d13a4047fe83e1a24a4f96362, type: 2}
-  - {fileID: 11400000, guid: 25384e552675448eaac03a5e0594fe89, type: 2}
-  - {fileID: 11400000, guid: 25384e552675448eaac03a5e0594fe89, type: 2}
-  - {fileID: 11400000, guid: 25384e552675448eaac03a5e0594fe89, type: 2}
-  - {fileID: 11400000, guid: 3a3eda2f239e44fac8c7376997b8aea8, type: 2}
-  - {fileID: 11400000, guid: 3a3eda2f239e44fac8c7376997b8aea8, type: 2}
-  - {fileID: 11400000, guid: 6adba50f663774690a53194773c56a4a, type: 2}
-  - {fileID: 11400000, guid: 6adba50f663774690a53194773c56a4a, type: 2}
-  playerStack: []
-  playerDiscard: []
-  enemyMasterDeck:
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 6119f293d82c14208875dee6c4c1a8a8, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  - {fileID: 11400000, guid: 1a26e9f85b864445da731c0d277ebeae, type: 2}
-  enemyStack: []
-  enemyDiscard: []
-  enemyBaseEnergy: 2
-  enemyCarryOverEnergy: 0
-  enemyCurrentEnergy: 0
-  playerDisplay: {fileID: 1285130761}
-  enemyDisplay: {fileID: 718828263}
+  CurrentState: 0
+  PlayerBaseStats: {fileID: 11400000, guid: 8b37f14826c0e4b12993da025d776b6c, type: 2}
+  EnemyBaseStats: {fileID: 11400000, guid: 7f6849c626e9d4621b016e160ef4320a, type: 2}
   consoleActive: 0
   console: {fileID: 1192315762}
   consoleInput: {fileID: 689824792}
@@ -1453,31 +1403,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 718828264}
-  - component: {fileID: 718828263}
   m_Layer: 0
   m_Name: EnemyStack
-  m_TagString: Untagged
+  m_TagString: EnemyStack
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &718828263
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 718828262}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2661d4b1a32d47369d13e5e184e18bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  StartingViewSize: 7
-  CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
-  IsPlayer: 0
-  cards: []
-  testTemplate: {fileID: 11400000, guid: ce02682f8034a4224aab5a4e43965bad, type: 2}
 --- !u!4 &718828264
 Transform:
   m_ObjectHideFlags: 0
@@ -2215,31 +2147,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1285130762}
-  - component: {fileID: 1285130761}
   m_Layer: 0
   m_Name: PlayerStack
-  m_TagString: Untagged
+  m_TagString: PlayerStack
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1285130761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1285130760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2661d4b1a32d47369d13e5e184e18bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  StartingViewSize: 7
-  CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
-  IsPlayer: 1
-  cards: []
-  testTemplate: {fileID: 11400000, guid: ce02682f8034a4224aab5a4e43965bad, type: 2}
 --- !u!4 &1285130762
 Transform:
   m_ObjectHideFlags: 0
