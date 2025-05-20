@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 public class BattleManager : MonoBehaviour
 {
-    public static BattleManager instance;
+    public static BattleManager Instance;
     PlayerInputActions InputActions;
 
     // --- Game State ---
@@ -31,7 +31,7 @@ public class BattleManager : MonoBehaviour
         Enemy
     }
 
-    public BattleState currentState;
+    public BattleState CurrentState;
     private bool gameIsOver = false;
 
 
@@ -71,9 +71,9 @@ public class BattleManager : MonoBehaviour
     void Awake()
     {
         // singleton object
-        if (instance == null)
+        if (Instance == null)
         {
-            instance = this;
+            Instance = this;
         }
         else
         {
@@ -87,8 +87,10 @@ public class BattleManager : MonoBehaviour
         enemyStack = new Deck();
         enemyDiscard = new Deck();
 
-        playerDisplay.StartingViewSize = playerMaxViewSize;
-        enemyDisplay.StartingViewSize = enemyMaxViewSize;
+        playerDisplay.BaseViewSize = playerMaxViewSize;
+        enemyDisplay.BaseViewSize = enemyMaxViewSize;
+        playerDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        enemyDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
         console.gameObject.SetActive(consoleActive);
     }
 
@@ -109,7 +111,7 @@ public class BattleManager : MonoBehaviour
         // Keep input field focused
         consoleInput.ActivateInputField();
         consoleInput.Select();
-        currentState = BattleState.Setup;
+        CurrentState = BattleState.Setup;
         SetupGame();
     }
 
@@ -135,7 +137,7 @@ public class BattleManager : MonoBehaviour
     void StartPlayerTurn()
     {
         if (gameIsOver) return;
-        currentState = BattleState.PlayerTurn;
+        CurrentState = BattleState.PlayerTurn;
         playerCurrentEnergy = playerBaseEnergy + playerCarryOverEnergy; // Gain
         enemyCurrentEnergy = enemyBaseEnergy + enemyCarryOverEnergy; // Enemy gains energy here so player can predict enemy's next turn
         Log("\n--- Your Turn ---");
@@ -155,13 +157,13 @@ public class BattleManager : MonoBehaviour
 
     public void PlayerExecute()
     {
-        if (currentState != BattleState.PlayerTurn)
+        if (CurrentState != BattleState.PlayerTurn)
         {
             return;
         }
         if (gameIsOver) return;
 
-        currentState = BattleState.PlayerExecution;
+        CurrentState = BattleState.PlayerExecution;
         Log("\n--- Executing Jobs ---");
         UpdateDisplay();
         ExecuteTurn(Entity.Player);
@@ -175,7 +177,7 @@ public class BattleManager : MonoBehaviour
     {
         if (gameIsOver) return;
 
-        currentState = BattleState.EnemyTurn;
+        CurrentState = BattleState.EnemyTurn;
         Log("\n--- Enemy Turn ---");
         UpdateDisplay(); // Show state before enemy action
         ExecuteTurn(Entity.Enemy);
@@ -213,7 +215,7 @@ public class BattleManager : MonoBehaviour
     void GameOver(string message)
     {
         gameIsOver = true;
-        currentState = BattleState.GameOver;
+        CurrentState = BattleState.GameOver;
         Log("\n====================");
         Log($"GAME OVER: {message}");
         Log("====================");
@@ -224,7 +226,7 @@ public class BattleManager : MonoBehaviour
 
     private void HandleInput(string input)
     {
-        if (currentState != BattleState.PlayerTurn || gameIsOver || string.IsNullOrWhiteSpace(input))
+        if (CurrentState != BattleState.PlayerTurn || gameIsOver || string.IsNullOrWhiteSpace(input))
         {
             // Clear input field if not player turn or input is empty
             if (consoleInput != null) consoleInput.text = "";
@@ -299,7 +301,7 @@ public class BattleManager : MonoBehaviour
         }
 
 
-        if (commandSuccess && currentState == BattleState.PlayerTurn) // Update display if a valid action was taken and we are still in player turn
+        if (commandSuccess && CurrentState == BattleState.PlayerTurn) // Update display if a valid action was taken and we are still in player turn
         {
             UpdateDisplay();
         }
@@ -307,7 +309,7 @@ public class BattleManager : MonoBehaviour
         // Clear input field after processing
         consoleInput.text = "";
         // Re-focus input field if still player's turn
-        if (currentState == BattleState.PlayerTurn && !gameIsOver)
+        if (CurrentState == BattleState.PlayerTurn && !gameIsOver)
         {
             consoleInput.ActivateInputField();
             consoleInput.Select();
@@ -325,18 +327,15 @@ public class BattleManager : MonoBehaviour
 
         int maxIdx = isPlayer ? playerMaxViewSize : enemyMaxViewSize; // cannot operate on cards out of view
         maxIdx = Math.Min(maxIdx, targetDeck.Count); // cannot operate on cards exceeding current size of deck
-        if (a < 0 || b < 0 || a > maxIdx - 1 || b > maxIdx - 1)
+        if (a < 0 || b < 0 || a >= maxIdx || b >= maxIdx)
         {
             Log("invalid index for swap");
             return false;
         }
-        // adjust for 1-indexing
-        // a = a - 1;
-        // b = b - 1;
         CardTemplate temp = targetDeck[a];
         targetDeck[a] = targetDeck[b];
         targetDeck[b] = temp;
-        Log($"swapped {a + 1}: {targetDeck[b].GetDisplayText()} with {b + 1}: {targetDeck[a].GetDisplayText()}");
+        Log($"Battle Manager Swapped {a}: {targetDeck[b].GetDisplayText()} with {b}: {targetDeck[a].GetDisplayText()}");
         display.Swap(a, b);
         return true;
     }
@@ -491,6 +490,15 @@ public class BattleManager : MonoBehaviour
             stack[k] = stack[n];
             stack[n] = temp;
         }
+    }
+
+    // --- Event Handlers ---
+
+    void HandleSwapAttempt(bool IsPlayer, int currentIndex, int targetIndex)
+    {
+        Entity targetEntity = IsPlayer ? Entity.Player : Entity.Enemy;
+        Debug.Log($"processing swap from handler, {currentIndex}, {targetIndex}");
+        Swap(targetEntity, currentIndex, targetIndex);
     }
 
     // --- Helper Functions ---

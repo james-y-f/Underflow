@@ -366,6 +366,7 @@ GameObject:
   - component: {fileID: 6706635777561405724}
   - component: {fileID: 5087094013951195976}
   - component: {fileID: 4486691972463311031}
+  - component: {fileID: 11714749662953848}
   - component: {fileID: -8721193137735434717}
   m_Layer: 0
   m_Name: Card
@@ -460,7 +461,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -478,11 +479,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e4c4078715e42e785b9befee4af498, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AttemptSwap:
+  CardHover:
     m_PersistentCalls:
       m_Calls: []
-  Template: {fileID: 0}
-  Index: -1
+  CardHeld:
+    m_PersistentCalls:
+      m_Calls: []
+  CardDrop:
+    m_PersistentCalls:
+      m_Calls: []
+  CardUnHover:
+    m_PersistentCalls:
+      m_Calls: []
+  ParentStack: {fileID: 0}
+  Swappable: 1
 --- !u!114 &4486691972463311031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -495,6 +505,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 319760f360e064e8dbd20ead805fd286, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &11714749662953848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7433155785039710817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 072c0d811bc8b4c6289fe24890ed8d25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MoveSpeedFactor: 5
 --- !u!54 &-8721193137735434717
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -518,7 +541,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 0
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
