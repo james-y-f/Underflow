@@ -195,7 +195,7 @@ public class StackDisplay : MonoBehaviour
         float xInterval = (xRight - left.x) / (cardCount - 1);
         for (int i = 1; i < cardCount; i++)
         {
-            CardPos.Add(new Vector3(left.x + xInterval * i, left.y, left.z));
+            CardPos.Add(new Vector3(left.x + xInterval * i, CardMotor.BaseHeight, left.z));
         }
     }
 

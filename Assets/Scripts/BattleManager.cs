@@ -418,16 +418,16 @@ public class BattleManager : MonoBehaviour
 
         // Consoles
         // Player
-        StringBuilder sb = new StringBuilder();
-        sb.Append($"player: ({Player.Stack.Count}) [{Player.CurrentEnergy}] <{Player.ViewSize}>\n");
-        sb.Append(PrintDeckContent(Player.Stack));
-        playerConsole.text = sb.ToString();
+        StringBuilder builder = new StringBuilder();
+        builder.Append($"player: ({Player.Stack.Count}) [{Player.CurrentEnergy}] <{Player.ViewSize}>\n");
+        builder.Append(PrintDeckContent(Player.Stack));
+        playerConsole.text = builder.ToString();
 
         // Enemy
-        sb.Clear();
-        sb.Append($"enemy: ({Enemy.Stack.Count}) [{Enemy.CurrentEnergy}] <{Enemy.ViewSize}>\n");
-        sb.Append(PrintDeckContent(Enemy.Stack));
-        enemyConsole.text = sb.ToString();
+        builder.Clear();
+        builder.Append($"enemy: ({Enemy.Stack.Count}) [{Enemy.CurrentEnergy}] <{Enemy.ViewSize}>\n");
+        builder.Append(PrintDeckContent(Enemy.Stack));
+        enemyConsole.text = builder.ToString();
     }
 
     void ReloadDisplays()
@@ -497,13 +497,13 @@ public class BattleManager : MonoBehaviour
         {
             lines = target.Count;
         }
-        StringBuilder str = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
         int limit = Math.Min(lines, target.Count);
         for (int i = 0; i < limit; i++)
         {
-            str.Append($"{i}. {target[i].Info.GetDisplayText()}\n");
+            builder.Append($"{i}. {target[i].Info.GetDisplayText()}\n");
         }
-        return str.ToString();
+        return builder.ToString();
     }
 
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
+using System.Text;
 using NUnit.Framework;
-using UnityEditor.ShaderGraph.Internal;
 using UnityEngine;
 
 [System.Serializable]
@@ -132,7 +132,14 @@ public class Deck : List<Card>
             result[affectedIndices[i]] = affectedIndicesSwapped[i];
         }
         Debug.Log($"swapped {currentIndex}: {temp.Info.GetDisplayText()} to {targetIndex}");
-        Debug.Log($"resulting order: {result}");
+        StringBuilder builder = new StringBuilder();
+        builder.Append("output order:[ ");
+        foreach (int i in result)
+        {
+            builder.Append($"{i} ");
+        }
+        builder.Append("]");
+        Debug.Log(builder.ToString());
         return result;
     }
 
