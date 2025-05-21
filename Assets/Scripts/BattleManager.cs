@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.Assertions;
 using System;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 public class BattleManager : MonoBehaviour
 {
@@ -215,7 +216,7 @@ public class BattleManager : MonoBehaviour
             case "s":
                 if (parts.Length > 2 && int.TryParse(parts[1], out int idx1) && int.TryParse(parts[2], out int idx2))
                 {
-                    commandSuccess = SwapStack(Player, idx1, idx2, true, true, true);
+                    commandSuccess = SwapStack(Player, idx1, idx2, true, true);
                 }
                 else
                 {
@@ -282,21 +283,22 @@ public class BattleManager : MonoBehaviour
 
     // --- Core Mechanics Implementation ---
 
-    public bool SwapStack(Entity target, int a, int b, bool hard = false, bool bypassSwappability = false, bool bypassViewSize = false)
+    bool SwapStack(Entity target, int currentIndex, int targetIndex, bool hard = false, bool bypassSwappability = false)
     {
         Assert.IsNotNull(target);
         int maxIdx = Math.Min(target.ViewSize, target.Stack.Count); // cannot operate on cards exceeding current size of deck
-        if (bypassViewSize)
-        {
-            maxIdx = target.Stack.Count;
-        }
-        if (a < 0 || b < 0 || a >= maxIdx || b >= maxIdx)
+        if (currentIndex < 0 || targetIndex < 0 || currentIndex >= maxIdx || targetIndex >= maxIdx)
         {
             Log("invalid index for swap");
             return false;
         }
-        target.Stack.Swap(a, b, hard, bypassSwappability);
-        target.StackDisplay.Swap(a, b);
+        List<int> newOrder = target.Stack.Swap(target.ViewSize, currentIndex, targetIndex, hard, bypassSwappability);
+        if (newOrder == null)
+        {
+            Log("swap failed");
+            return false;
+        }
+        target.StackDisplay.UpdateToOrder(newOrder);
         Log("swap successful");
         return true;
     }

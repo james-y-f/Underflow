@@ -1,6 +1,8 @@
 using System.Collections;
 using UnityEngine;
 
+// TODO: figure out hovering behavior bug
+
 public class CardMotor : MonoBehaviour
 {
     public float MoveSpeedFactor = 5;
