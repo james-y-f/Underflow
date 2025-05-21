@@ -1,13 +1,10 @@
 using UnityEngine;
-using TMPro;
 using System.Text;
 using System.Collections;
-using UnityEngine.UI;
 using UnityEngine.Assertions;
 using System;
 using UnityEngine.InputSystem;
 using System.Collections.Generic;
-
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -36,13 +33,8 @@ public class BattleManager : MonoBehaviour
 
     // --- UI References ---
     [SerializeField] bool consoleActive = false;
-    [SerializeField] Canvas console;
-    [SerializeField] TMP_InputField consoleInput;
-    [SerializeField] TextMeshProUGUI consoleDisplay;
-    [SerializeField] ScrollRect consoleScroll;
-    [SerializeField] TextMeshProUGUI playerConsole;
-    [SerializeField] TextMeshProUGUI enemyConsole;
-    string VALID_COMMANDS = "swap [number] [number], end, show [list], desc [list] [number]";
+    [SerializeField] GameObject console;
+
 
     // --- Unity Methods ---
     void Awake()
@@ -79,11 +71,6 @@ public class BattleManager : MonoBehaviour
     }
     void Start()
     {
-        consoleInput.onEndEdit.AddListener(HandleInput);
-        // Keep input field focused
-        consoleInput.ActivateInputField();
-        consoleInput.Select();
-
         Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
         Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
 
@@ -115,8 +102,7 @@ public class BattleManager : MonoBehaviour
         // Re-focus input field
         if (consoleInput != null)
         {
-            consoleInput.ActivateInputField();
-            consoleInput.Select();
+
         }
     }
 
@@ -187,99 +173,6 @@ public class BattleManager : MonoBehaviour
         UpdateDisplay();
     }
 
-    // --- Console Input Handling ---
-
-    private void HandleInput(string input)
-    {
-        if (CurrentState != BattleState.PlayerTurn || gameIsOver || string.IsNullOrWhiteSpace(input))
-        {
-            // Clear input field if not player turn or input is empty
-            if (consoleInput != null) consoleInput.text = "";
-            // Re-focus input field
-            if (consoleInput != null && !gameIsOver)
-            {
-                consoleInput.ActivateInputField();
-                consoleInput.Select();
-            }
-            return;
-        }
-
-        Log($"> {input}"); // Log player command
-        string[] parts = input.ToLower().Split(' ');
-        string command = parts[0];
-
-        bool commandSuccess = false;
-
-        switch (command)
-        {
-            case "swap":
-            case "s":
-                if (parts.Length > 2 && int.TryParse(parts[1], out int idx1) && int.TryParse(parts[2], out int idx2))
-                {
-                    commandSuccess = SwapStack(Player, idx1, idx2, true, true);
-                }
-                else
-                {
-                    Log("Invalid command. Use 'swap [number] [number]' (e.g., 'swap 3 1').");
-                }
-                break;
-
-            case "end":
-            case "e":
-                commandSuccess = true; // Always succeeds
-                PlayerExecute();
-                break;
-
-            case "show":
-            case "sh":
-                if (parts.Length > 1)
-                {
-                    Deck deckToShow = Str2Deck(parts[1]);
-                    if (deckToShow == null) { Log("invalid list name"); break; }
-                    Log(PrintDeckContent(deckToShow, deckToShow.Count));
-                    commandSuccess = true;
-                }
-                else
-                {
-                    Log("Invalid command. Use 'show [list]' (e.g., 'show playerdiscard').");
-                }
-                break;
-
-            case "desc":
-            case "d":
-                if (parts.Length > 2 && int.TryParse(parts[2], out int idx))
-                {
-                    // Adjust index to be 0-based
-                    Deck deckToDesc = Str2Deck(parts[1]);
-                    if (deckToDesc == null) { Log("invalid list name"); break; }
-                    commandSuccess = PrintDesc(Str2Deck(parts[1]), idx - 1);
-                }
-                else
-                {
-                    Log("Invalid command. Use 'desc [target] [number]' (e.g., 'desc enemydiscard 1').");
-                }
-                break;
-
-            default:
-                Log($"Unknown command: '{command}'. Use {VALID_COMMANDS}");
-                break;
-        }
-
-
-        if (commandSuccess && CurrentState == BattleState.PlayerTurn) // Update display if a valid action was taken and we are still in player turn
-        {
-            UpdateDisplay();
-        }
-
-        // Clear input field after processing
-        consoleInput.text = "";
-        // Re-focus input field if still player's turn
-        if (CurrentState == BattleState.PlayerTurn && !gameIsOver)
-        {
-            consoleInput.ActivateInputField();
-            consoleInput.Select();
-        }
-    }
 
     // --- Core Mechanics Implementation ---
 
@@ -402,12 +295,6 @@ public class BattleManager : MonoBehaviour
         console.gameObject.SetActive(consoleActive);
     }
 
-    void Log(string message)
-    {
-        consoleDisplay.text += message + "\n";
-        StartCoroutine(ScrollToBottom());
-        Debug.Log(message); // Also log to Unity console
-    }
 
     void UpdateDisplay()
     {
@@ -480,32 +367,6 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    bool PrintDesc(Deck target, int idx)
-    {
-        if (idx < 0 || idx >= target.Count)
-        {
-            Log($"Invalid card index: {idx + 1}. Choose a number between 1 and {target.Count}.");
-            return false;
-        }
-        Log(target[idx].Info.GetDescription());
-        return true;
-    }
-
-    string PrintDeckContent(Deck target, int lines = -1)
-    {
-        if (lines == -1) // default to printing entire deck
-        {
-            lines = target.Count;
-        }
-        StringBuilder builder = new StringBuilder();
-        int limit = Math.Min(lines, target.Count);
-        for (int i = 0; i < limit; i++)
-        {
-            builder.Append($"{i}. {target[i].Info.GetDisplayText()}\n");
-        }
-        return builder.ToString();
-    }
-
 
     Deck Str2Deck(string input)
     {
@@ -543,12 +404,5 @@ public class BattleManager : MonoBehaviour
         return 0;
     }
 
-    IEnumerator ScrollToBottom()
-    {
-        yield return new WaitForEndOfFrame();
-        Canvas.ForceUpdateCanvases();
-        consoleScroll.verticalNormalizedPosition = 0f;
-        yield return new WaitForEndOfFrame();
-        consoleScroll.verticalNormalizedPosition = 0f;
-    }
+
 }
