@@ -17,15 +17,37 @@
             ],
             "bindings": [
                 {
-                    "name": "",
-                    "id": "e67c919a-3cf7-4f3b-8fc3-e3d2dbab8f43",
+                    "name": "One Modifier",
+                    "id": "6373acda-7005-4100-b529-81b925d4c2b5",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleConsole",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "d302e450-ad54-4bc6-8628-258e0fd53d11",
+                    "path": "<Keyboard>/alt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "ToggleConsole",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "86696115-2f99-41db-9398-ff2801359c2f",
                     "path": "<Keyboard>/b",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "ToggleConsole",
                     "isComposite": false,
-                    "isPartOfComposite": false
+                    "isPartOfComposite": true
                 }
             ]
         }

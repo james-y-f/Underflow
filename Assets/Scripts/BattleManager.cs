@@ -24,7 +24,10 @@ public class BattleManager : MonoBehaviour
         get;
         private set;
     }
-    private bool gameIsOver = false;
+    private bool GameIsOver
+    {
+        get { return CurrentState == BattleState.GameOver; }
+    }
 
     [SerializeField] Entity Player;
     [SerializeField] Entity Enemy;
@@ -95,7 +98,7 @@ public class BattleManager : MonoBehaviour
 
     void StartPlayerTurn()
     {
-        if (gameIsOver) return;
+        if (GameIsOver) return;
         CurrentState = BattleState.PlayerTurn;
         Player.ResetEnergy();
         Enemy.ResetEnergy();
@@ -111,13 +114,13 @@ public class BattleManager : MonoBehaviour
         {
             return;
         }
-        if (gameIsOver) return;
+        if (GameIsOver) return;
 
         CurrentState = BattleState.PlayerExecution;
         Bert.Log("\n--- Executing Jobs ---");
         UpdateDisplay();
         ExecuteTurn(Player);
-        if (gameIsOver) return;
+        if (GameIsOver) return;
 
         // Transition to Enemy Turn
         StartEnemyTurn();
@@ -125,13 +128,13 @@ public class BattleManager : MonoBehaviour
 
     void StartEnemyTurn()
     {
-        if (gameIsOver) return;
+        if (GameIsOver) return;
 
         CurrentState = BattleState.EnemyTurn;
         Bert.Log("\n--- Enemy Turn ---");
         UpdateDisplay(); // Show state before enemy action
         ExecuteTurn(Enemy);
-        if (gameIsOver) return;
+        if (GameIsOver) return;
 
         // Transition back to Player Turn
         StartPlayerTurn();
@@ -139,7 +142,7 @@ public class BattleManager : MonoBehaviour
 
     bool CheckGameOver()
     {
-        if (gameIsOver)
+        if (GameIsOver)
         {
             return true;
         }
@@ -164,7 +167,6 @@ public class BattleManager : MonoBehaviour
 
     void GameOver(string message)
     {
-        gameIsOver = true;
         CurrentState = BattleState.GameOver;
         Bert.Log("\n====================");
         Bert.Log($"GAME OVER: {message}");

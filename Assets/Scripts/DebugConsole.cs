@@ -10,9 +10,9 @@ public class DebugConsole : MonoBehaviour
 {
     public static DebugConsole Instance;
     public UnityEvent<bool, int, int> SwapCommand;
-    [SerializeField] TMP_InputField consoleInput;
-    [SerializeField] TextMeshProUGUI consoleDisplayText;
-    [SerializeField] ScrollRect consoleScroll;
+    [SerializeField] TMP_InputField Input;
+    [SerializeField] TextMeshProUGUI DisplayText;
+    [SerializeField] ScrollRect Scroll;
     BattleManager Battle;
     StringBuilder DisplayLog;
     const string VALID_COMMANDS = "swap [target] [number] [number], debug";
@@ -28,25 +28,25 @@ public class DebugConsole : MonoBehaviour
             Destroy(gameObject);
         }
 
-        Assert.IsNotNull(consoleInput);
-        Assert.IsNotNull(consoleDisplayText);
-        Assert.IsNotNull(consoleScroll);
+        Assert.IsNotNull(Input);
+        Assert.IsNotNull(DisplayText);
+        Assert.IsNotNull(Scroll);
         DisplayLog = new StringBuilder();
     }
 
     void Start()
     {
         Battle = BattleManager.Instance;
-        consoleInput.onEndEdit.AddListener(HandleInput);
+        Input.onEndEdit.AddListener(HandleInput);
         // Keep input field focused
-        consoleInput.ActivateInputField();
-        consoleInput.Select();
+        Input.ActivateInputField();
+        Input.Select();
     }
 
     void LogToConsole(string message)
     {
         DisplayLog.AppendLine(message);
-        consoleDisplayText.text = DisplayLog.ToString();
+        DisplayText.text = DisplayLog.ToString();
         if (!gameObject.activeSelf) return;
         StartCoroutine(ScrollToBottom());
     }
@@ -80,16 +80,16 @@ public class DebugConsole : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
         Canvas.ForceUpdateCanvases();
-        consoleScroll.verticalNormalizedPosition = 0f;
+        Scroll.verticalNormalizedPosition = 0f;
         yield return new WaitForEndOfFrame();
-        consoleScroll.verticalNormalizedPosition = 0f;
+        Scroll.verticalNormalizedPosition = 0f;
     }
 
     void ClearAndRefocusInput()
     {
-        consoleInput.text = "";
-        consoleInput.ActivateInputField();
-        consoleInput.Select();
+        Input.text = "";
+        Input.ActivateInputField();
+        Input.Select();
     }
 
     private void HandleInput(string input)
