@@ -1764,9 +1764,9 @@ MonoBehaviour:
   SwapCommand:
     m_PersistentCalls:
       m_Calls: []
-  consoleInput: {fileID: 689824792}
-  consoleDisplayText: {fileID: 1877717983}
-  consoleScroll: {fileID: 1909399506}
+  Input: {fileID: 689824792}
+  DisplayText: {fileID: 1877717983}
+  Scroll: {fileID: 1909399506}
 --- !u!1 &1192315759
 GameObject:
   m_ObjectHideFlags: 0
