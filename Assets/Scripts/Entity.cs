@@ -1,4 +1,4 @@
-using UnityEngine;
+using System.Text;
 
 [System.Serializable]
 public class Entity
@@ -60,5 +60,27 @@ public class Entity
         CurrentEnergy = BaseEnergy + EnergyModifier + CarryOverEnergy;
         CarryOverEnergy = 0;
         // TODO: log this
+    }
+
+    public string PrintEntityDebugStatus()
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.AppendLine($"{Name} : ------------------------");
+        builder.AppendLine($"- IsPlayer       : {IsPlayer}");
+        builder.AppendLine($"- BaseViewSize   : {BaseViewSize}");
+        builder.AppendLine($"- ViewSizeMod    : {ViewSizeModifier}");
+        builder.AppendLine($"- ViewSize       : {ViewSize}");
+        builder.AppendLine($"- BaseEnergy     : {BaseEnergy}");
+        builder.AppendLine($"- EnergyModifier : {EnergyModifier}");
+        builder.AppendLine($"- CarryOverEnergy: {CarryOverEnergy}");
+        builder.AppendLine($"- CurrentEnergy  : {CurrentEnergy}");
+        builder.AppendLine($"- ShuffleAtStart : {ShuffleAtStart}");
+        builder.AppendLine($" ------ Stack ------");
+        builder.Append(Stack.PrintDeckContent());
+        builder.AppendLine($" ----- Discard -----");
+        builder.Append(Discard.PrintDeckContent());
+        builder.AppendLine($" ------ Exile ------");
+        builder.Append(Exile.PrintDeckContent());
+        return builder.ToString();
     }
 }

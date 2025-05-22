@@ -70,17 +70,6 @@ public class StackDisplay : MonoBehaviour
         UpdateCardLocations();
     }
 
-    public void Swap(int a, int b)
-    {
-        Assert.IsTrue(a >= 0 && a <= CardObjects.Count);
-        Assert.IsTrue(b >= 0 && b <= CardObjects.Count);
-        Debug.Log($"Display swapping {a} and {b}");
-        GameObject temp = CardObjects[a];
-        CardObjects[a] = CardObjects[b];
-        CardObjects[b] = temp;
-        UpdateCardLocations();
-    }
-
     public void UpdateToOrder(List<int> newOrder)
     {
         Assert.IsNotNull(newOrder);
@@ -160,9 +149,7 @@ public class StackDisplay : MonoBehaviour
             int heldIndex = CardObjects.FindIndex(x => x == HeldCardObject);
             if (heldIndex != closestCardPositionIndex)
             {
-                Debug.Log($"Invoking {heldIndex}, {closestCardPositionIndex}");
                 SwapAttempt.Invoke(IsPlayer, heldIndex, closestCardPositionIndex);
-                Debug.Log($"Finished Invoking {heldIndex}, {closestCardPositionIndex}");
             }
             yield return new WaitForFixedUpdate();
         }

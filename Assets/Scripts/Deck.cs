@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
@@ -24,7 +25,7 @@ public class Deck : List<Card>
         while (n > 1)
         {
             n--;
-            int k = Random.Range(0, n);
+            int k = UnityEngine.Random.Range(0, n);
             Card temp = this[k];
             this[k] = this[n];
             this[n] = temp;
@@ -141,6 +142,17 @@ public class Deck : List<Card>
         builder.Append("]");
         Debug.Log(builder.ToString());
         return result;
+    }
+    public string PrintDeckContent(int minLine = 0, int maxLine = int.MaxValue)
+    {
+        StringBuilder builder = new StringBuilder();
+        int limit = Math.Min(maxLine, Count);
+        Assert.LessOrEqual(minLine, limit);
+        for (int i = 0; i < limit; i++)
+        {
+            builder.AppendLine($"  {i}. {this[i].Info.GetDisplayText()}");
+        }
+        return builder.ToString();
     }
 
     void CheckInRange(int index)

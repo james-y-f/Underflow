@@ -49,6 +49,15 @@ public enum ValueType
     Variable
 }
 
+public enum DeckEntity
+{
+    Undefined,
+    PlayerStack,
+    PlayerDiscard,
+    EnemyStack,
+    EnemyDiscard
+}
+
 [System.Serializable]
 public struct CardInfo
 {
