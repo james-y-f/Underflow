@@ -1,83 +1,52 @@
-using System.Collections;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
+using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
+// this is so that we can get a mutable card object
 public class Card : MonoBehaviour
 {
-    public UnityEvent CardDrop;
-    public CardTemplate Template;
-    public int Index = -1;
-    Vector3 MouseOffset;
-    Vector3 OriginalPosOnClick;
-    Rigidbody RB;
-    float BaseHeight;
-    float HoverHeight = 0.2f;
+    public static int UID_COUNTER { get; private set; }
+    public CardTemplate Template { get; private set; }
+    public CardInfo Info;
+    public List<CardEffect> Effects;
+    public List<CardEffect> OnDeleteEffects;
 
-    bool Hovering;
-    bool Held;
-
-    void Awake()
+    public Card(CardTemplate template)
     {
-        BaseHeight = transform.position.y;
-        RB = gameObject.GetComponent<Rigidbody>();
-        Held = false;
+        SetTemplate(template);
+        Info.UID = GetNewUID();
     }
 
-    private Vector3 CalcScreenPos()
+    public void SetTemplate(CardTemplate template)
     {
-        return Camera.main.WorldToScreenPoint(transform.position);
-    }
+        Template = template;
 
-    void OnMouseEnter()
-    {
-        // display tooltip 
-        // change color
-        //StartCoroutine(setHover(true));
-    }
+        // prevent uid from being overwritten by template change
+        int uid = Info.UID;
+        Info = template.Info;
+        Info.UID = uid;
 
-    void OnMouseDown()
-    {
-        MouseOffset = Input.mousePosition - CalcScreenPos();
-        OriginalPosOnClick = transform.position;
-        Held = true;
-    }
-
-    void OnMouseDrag()
-    {
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition - MouseOffset);
-        transform.position = new Vector3(mousePos.x, OriginalPosOnClick.y, OriginalPosOnClick.z); // cards can only be moved horizontally
-    }
-
-    void OnMouseUp()
-    {
-        Held = false;
-        CardDrop.Invoke();
-    }
-
-    void OnMouseExit()
-    {
-        // cancel tooltip 
-        // change color back
-        // StartCoroutine(setHover(false));
-    }
-
-    void OnTriggerEnter(Collider other)
-    {
-        GameObject otherObject = other.gameObject;
-        Debug.Log($"trigger on {Index} with {other.gameObject.name}");
-        // check if the other gameobject is also a card
-        if (Held && otherObject.CompareTag(gameObject.tag))
+        Effects.Clear();
+        OnDeleteEffects.Clear();
+        foreach (CardEffect effect in template.Effects)
         {
-            BattleManager.instance.Swap(BattleManager.Entity.Player, Index, otherObject.GetComponent<Card>().Index);
+            Effects.Add(effect);
+        }
+        foreach (CardEffect effect in template.OnDeleteEffects)
+        {
+            OnDeleteEffects.Add(effect);
         }
     }
 
-    // helper functions
-    IEnumerator setHover(bool hover)
+    public static void ResetUIDCounter()
     {
-        float newHeight = hover ? BaseHeight + HoverHeight : BaseHeight;
-        Vector3 newPos = new Vector3(transform.position.x, newHeight, transform.position.z);
-        RB.MovePosition(newPos);
-        yield return null;
+        UID_COUNTER = 0;
+    }
+
+    public int GetNewUID()
+    {
+        return UID_COUNTER++;
     }
 }

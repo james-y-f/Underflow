@@ -1,10 +1,9 @@
+// TODO: display more things
 using UnityEngine;
 using TMPro;
-using UnityEngine.UIElements;
 
 public class CardDisplay : MonoBehaviour
 {
-    CardTemplate CardRef;
     TMP_Text Title;
     TMP_Text Energy;
     TMP_Text Description;
@@ -16,13 +15,12 @@ public class CardDisplay : MonoBehaviour
         Energy = tf.Find("Energy").GetComponent<TMP_Text>();
         Description = tf.Find("Description").GetComponent<TMP_Text>();
     }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    public void UpdateDisplay(CardInfo info)
     {
-        CardRef = GetComponent<Card>().Template;
-        Title.text = CardRef.title;
-        Energy.text = CardRef.energyCost.ToString();
-        Description.text = CardRef.description;
+        Title.text = info.Title;
+        Energy.text = info.EnergyCost.ToString();
+        Description.text = info.Description;
     }
 
 }

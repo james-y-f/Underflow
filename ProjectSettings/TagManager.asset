@@ -6,6 +6,8 @@ TagManager:
   tags:
   - PlayerCard
   - EnemyCard
+  - PlayerStack
+  - EnemyStack
   layers:
   - Default
   - TransparentFX

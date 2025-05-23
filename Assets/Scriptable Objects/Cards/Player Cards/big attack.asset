@@ -12,12 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6332754a87094437e9db4843cf25c96d, type: 3}
   m_Name: big attack
   m_EditorClassIdentifier: 
-  title: big attack
-  description: Delete the top 5 cards of the opponent's stack
-  energyCost: 2
-  effects:
-  - type: 2
-    target: 2
-    mode: 1
-    values: 05000000
-    referenceCard: {fileID: 0}
+  Info:
+    Title: Big Attack
+    Description: Delete 4 cards from the top of the opponent's stack
+    EnergyCost: 2
+    Rarity: 0
+    Swappable: 1
+    UID: 0
+  Effects:
+  - Type: 2
+    Target: 2
+    Mode: 1
+    Values:
+    - Type: 1
+      Constant: 4
+    ReferenceCardTemplate: {fileID: 0}
+  OnDeleteEffects: []

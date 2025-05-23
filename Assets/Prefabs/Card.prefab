@@ -367,6 +367,7 @@ GameObject:
   - component: {fileID: 5087094013951195976}
   - component: {fileID: 4486691972463311031}
   - component: {fileID: -8721193137735434717}
+  - component: {fileID: 2296912159847431371}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -478,11 +479,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1e4c4078715e42e785b9befee4af498, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AttemptSwap:
+  CardHover:
+    m_PersistentCalls:
+      m_Calls: []
+  CardHeld:
+    m_PersistentCalls:
+      m_Calls: []
+  CardDrop:
+    m_PersistentCalls:
+      m_Calls: []
+  CardUnHover:
     m_PersistentCalls:
       m_Calls: []
   Template: {fileID: 0}
   Index: -1
+  ParentStack: {fileID: 0}
 --- !u!114 &4486691972463311031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -522,6 +533,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &2296912159847431371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7433155785039710817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69ac5a7fb3f5e49098f557fde9ab9056, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MoveSpeedFactor: 5
 --- !u!1 &8192914415058168335
 GameObject:
   m_ObjectHideFlags: 0

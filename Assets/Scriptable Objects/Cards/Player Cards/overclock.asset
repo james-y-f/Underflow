@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: overclock
   m_EditorClassIdentifier: 
   title: overclock
-  description: 'Delete the top 2 cards of the owner''s deck;
+  description: 'Delete the top 1 card of the owner''s deck;
 
     Gain 2 energy'
   energyCost: 1
@@ -21,7 +21,7 @@ MonoBehaviour:
   - type: 2
     target: 3
     mode: 1
-    values: 02000000
+    values: 01000000
     referenceCard: {fileID: 0}
   - type: 4
     target: 3
