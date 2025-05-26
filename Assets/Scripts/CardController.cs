@@ -9,7 +9,12 @@ public class CardController : MonoBehaviour
     public UnityEvent CardUnHover;
     public StackDisplay ParentStack;
     public CardInfo Info;
-    public bool Swappable = true;
+    public bool CardSwappable = true;
+    public bool Swappable
+    {
+        get { return ParentStack.DeckSwappable && CardSwappable; }
+        private set { }
+    }
     Vector3 MouseOffset;
     CardDisplay Display;
     CardMotor Motor;
@@ -27,7 +32,7 @@ public class CardController : MonoBehaviour
 
     void Start()
     {
-        Display.UpdateDisplay(Info);
+        Display.UpdateTextDisplay(Info);
     }
 
     private Vector3 CalcScreenPos()
@@ -37,8 +42,8 @@ public class CardController : MonoBehaviour
 
     void OnMouseEnter()
     {
-        // display tooltip 
-        // change color
+        // TODO: display tooltip 
+        Display.ShowSelectionHighlight();
         if (!Swappable || Held || !ParentStack.CardHoverable()) return;
         // prevents hovering over another card while holding a card
         Hovering = true;
@@ -72,7 +77,7 @@ public class CardController : MonoBehaviour
     void OnMouseExit()
     {
         // cancel tooltip 
-        // change color back
+        Display.ResetColor();
         if (!Swappable || Held || !Hovering) return;
         // prevents exiting the card while holding
         Hovering = false;

@@ -47,9 +47,10 @@ public class StackDisplay : MonoBehaviour
         }
         Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
         GameObject card = Instantiate(CardPrefab, transform.position, CardPrefab.transform.rotation);
-        card.tag = IsPlayer ? "PlayerCard" : "EnemyCard";
-        card.layer = IsPlayer ? LayerMask.NameToLayer("PlayerCards") : LayerMask.NameToLayer("EnemyCards");
-        card.name = info.Title;
+        card.tag = IsPlayer ? Constants.PlayerCardTag : Constants.EnemyCardTag;
+        card.layer = IsPlayer ? LayerMask.NameToLayer(Constants.PlayerCardsLayerName)
+                              : LayerMask.NameToLayer(Constants.EnemyCardsLayerName);
+        card.name = $"{card.tag} {info.Title} {info.UID}";
         CardController controller = card.GetComponent<CardController>();
         controller.ParentStack = this;
         controller.CardDrop.AddListener(UpdateCardLocations);
@@ -182,7 +183,7 @@ public class StackDisplay : MonoBehaviour
         float xInterval = (xRight - left.x) / (cardCount - 1);
         for (int i = 1; i < cardCount; i++)
         {
-            CardPos.Add(new Vector3(left.x + xInterval * i, CardMotor.BaseHeight, left.z));
+            CardPos.Add(new Vector3(left.x + xInterval * i, Constants.BaseHeight, left.z));
         }
     }
 
