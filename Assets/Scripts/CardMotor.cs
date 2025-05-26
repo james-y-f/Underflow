@@ -15,7 +15,7 @@ public class CardMotor : MonoBehaviour
         CurrentTargetPosition = new Vector3(0, 0, 0);
     }
 
-    public void Move(Vector3 targetPosition, float moveSpeedFactor = Constants.DefaultSpeedFactor)
+    public void Move(Vector3 targetPosition, float moveSpeedFactor = Constants.DefaultCardMoveSpeedFactor)
     {
         if (CurrentTargetPosition == targetPosition) return;
         CurrentTargetPosition = targetPosition;
@@ -41,7 +41,7 @@ public class CardMotor : MonoBehaviour
         Snap(new Vector3(x, y, z));
     }
 
-    IEnumerator MoveCoroutine(Vector3 targetPosition, float moveSpeedFactor)
+    public IEnumerator MoveCoroutine(Vector3 targetPosition, float moveSpeedFactor = Constants.DefaultCardMoveSpeedFactor)
     {
         while (Vector3.Distance(Rb.position, targetPosition) > Constants.PosTolerance)
         {

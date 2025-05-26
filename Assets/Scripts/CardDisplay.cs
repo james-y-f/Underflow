@@ -1,7 +1,6 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
-using Unity.Burst.CompilerServices;
 
 public class CardDisplay : MonoBehaviour
 {

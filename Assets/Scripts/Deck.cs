@@ -54,7 +54,7 @@ public class Deck : List<Card>
         }
 
         List<int> result = new List<int>();
-        for (int i = 0; i < viewSize; i++)
+        for (int i = 0; i < Math.Min(Count, viewSize); i++)
         {
             result.Add(i);
         }

@@ -1,4 +1,3 @@
-using System.Net.NetworkInformation;
 using UnityEngine;
 
 public static class Constants
@@ -7,13 +6,16 @@ public static class Constants
     public const string PlayerCardTag = "PlayerCard";
     public const string EnemyCardTag = "EnemyCard";
 
+    public const string PlayerStackTag = "PlayerStack";
+    public const string EnemyStackTag = "EnemyStack";
+
     // layers
     public const string PlayerCardsLayerName = "PlayerCards";
     public const string EnemyCardsLayerName = "EnemyCards";
 
     // Card Movement    
     public const float PosTolerance = 0.05f;
-    public const float DefaultSpeedFactor = 5;
+    public const float DefaultCardMoveSpeedFactor = 5;
     public const float BaseHeight = 0.1f;
     public const float HoverHeight = 0.2f;
 
@@ -40,5 +42,13 @@ public static class Constants
     }
 
     public static Color DeletionEffectColor = Color.red;
-    public static Color AddEffectColor = Color.green;
+    public static Color ExecutionDoneColor = Color.green;
+    public static Color AddEffectColor = Color.yellow;
+
+    // Energy
+    public static Vector3 EnergySpawnDisplacement
+    {
+        get { return new Vector3(-0.5f, 0f, 0f); }
+        private set { }
+    }
 }
