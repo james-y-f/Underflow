@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public class EnergyDisplay : MonoBehaviour
 {
