@@ -23,7 +23,8 @@ public static class Constants
     // TODO: finalize colors
     public const float DefaultColorFadeSpeed = 0.05f;
     public const float DefaultColorFlashSpeed = 0.1f;
-    public static float ColorTolerance = 0.02f;
+    public const float ColorTolerance = 0.02f;
+    public const float TransparencyFactor = 0.25f;
     public static Color PlayerCardColor
     {
         get { return new Color(0.1f, 0.1f, 0.3f, 1f); }
@@ -35,9 +36,21 @@ public static class Constants
         private set { }
     }
 
+    public static Color EnergyStoneColor
+    {
+        get { return new Color(0.032395f, 0.981132f, 0.06513549f, 1f); }
+        private set { }
+    }
+
     public static Color SelectionHighlight
     {
         get { return new Color(0.1f, 0.1f, 0.1f, 0f); }
+        private set { }
+    }
+
+    public static Color FlashHighlight
+    {
+        get { return new Color(0.95f, 0.95f, 0.95f, 1f); }
         private set { }
     }
 
@@ -51,4 +64,8 @@ public static class Constants
         get { return new Vector3(-0.5f, 0f, 0f); }
         private set { }
     }
+
+    // Animation
+    public const float StandardActionDelay = 0.5f;
+    public const float FastActionDelay = 0.25f;
 }

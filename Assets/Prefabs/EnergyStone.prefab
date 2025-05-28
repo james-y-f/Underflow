@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 7243855377966509181}
   - component: {fileID: 4190687935779929425}
   - component: {fileID: 3329528717977227717}
+  - component: {fileID: 4026176938569992276}
   m_Layer: 0
   m_Name: EnergyStone
   m_TagString: Untagged
@@ -108,3 +109,15 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &4026176938569992276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1436666365584530208}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cc5f8eb0862e4708b816dac8117948a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

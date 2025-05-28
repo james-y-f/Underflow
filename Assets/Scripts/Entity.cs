@@ -62,6 +62,7 @@ public class Entity
         Stack.Swappable = isPlayer;
         StackDisplay = stackDisplay;
         StackDisplay.ViewSize = ViewSize;
+        StackDisplay.Name = Name;
     }
 
     public void ResetTemporaryStats()

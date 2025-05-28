@@ -2,18 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
-using UnityEngine.Timeline;
+using TMPro;
 
 // TODO: implement an object pool for storing cards that are not in the window yet
-// TODO: make bypassing swappability work
+// TODO: make bypassing viewsize work
 
 public class StackDisplay : MonoBehaviour
 {
     public UnityEvent<bool, int, int> SwapAttempt;
+    public String Name;
     int viewSize;
     public int ViewSize
     {
@@ -37,11 +37,11 @@ public class StackDisplay : MonoBehaviour
     Transform ExecutionPos;
     [SerializeField] List<GameObject> CardObjects;
     List<Vector3> CardPos;
-
     GameObject ExecutingCard;
     GameObject HoveredCard;
     GameObject HeldCardObject;
     Coroutine HoldingCardCoroutine;
+    TMP_Text DisplayText;
 
     void Awake()
     {
@@ -51,6 +51,7 @@ public class StackDisplay : MonoBehaviour
         RightPos = transform.Find("RightmostCardPos");
         ExecutionPos = transform.Find("ExecutionPos");
         EnergyDisplay = transform.Find("EnergyDisplay").GetComponent<EnergyDisplay>();
+        DisplayText = transform.Find("DisplayText").GetComponent<TMP_Text>();
         CardObjects = new List<GameObject>();
         IsPlayer = gameObject.tag == Constants.PlayerStackTag;
         DeckSwappable = IsPlayer; // for now, TODO: find a way to couple this with entity in battle manager
@@ -77,7 +78,7 @@ public class StackDisplay : MonoBehaviour
         Debug.Log($"Execution Done, Discarding {ExecutingCard.name}");
         Assert.IsNotNull(ExecutingCard);
 
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(Constants.StandardActionDelay);
         yield return StartCoroutine(GetDisplay(ExecutingCard).FlashColor(Constants.ExecutionDoneColor));
 
         Destroy(ExecutingCard);
@@ -91,7 +92,7 @@ public class StackDisplay : MonoBehaviour
         GameObject removedCard = CardObjects[index];
 
         // TODO: add more animation in the future
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(Constants.StandardActionDelay);
         yield return GetDisplay(removedCard).FlashColor(Constants.DeletionEffectColor);
 
         CardObjects.RemoveAt(index);
@@ -120,14 +121,6 @@ public class StackDisplay : MonoBehaviour
         controller.CardUnHover.AddListener(HandleCardUnHover);
         controller.Info = info;
         CardObjects.Insert(index, card);
-        UpdateCardLocations();
-    }
-
-    public void DiscardAndDistroyCard(int index = 0)
-    {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        Destroy(CardObjects[index]);
-        CardObjects.RemoveAt(index);
         UpdateCardLocations();
     }
 
@@ -257,6 +250,11 @@ public class StackDisplay : MonoBehaviour
                 card.SetActive(false);
                 card.transform.position = SpawnPoint.position;
             }
+        }
+        DisplayText.text = $"{Name}\nCards Left: {CardObjects.Count}";
+        if (CardObjects.Count == 0)
+        {
+            DisplayText.text = $"{Name} Lost\nNo Cards Left In Deck";
         }
     }
 

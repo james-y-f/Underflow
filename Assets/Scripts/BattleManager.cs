@@ -103,8 +103,15 @@ public class BattleManager : MonoBehaviour
         if (GameIsOver) yield break;
         ConsoleInstance.Log("\n---Player Turn---");
         ConsoleInstance.LogValidCommands();
+
         Player.ResetEnergy();
-        Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy);
+
+        Player.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy));
+
+        Enemy.StackDisplay.EnergyDisplay.RemoveAllEnergy();
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.AddTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
+
         CurrentState = BattleState.PlayerTurn;
     }
 
@@ -128,9 +135,11 @@ public class BattleManager : MonoBehaviour
     {
         ConsoleInstance.Log("\n--- Enemy Turn ---");
         CurrentState = BattleState.EnemyTurn;
-        Enemy.ResetEnergy();
         // TODO: energy stuff here
-        Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy);
+
+        Enemy.ResetEnergy();
+        Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy));
         yield return StartCoroutine(ExecuteTurnCoroutine(Enemy));
         if (GameIsOver) yield break;
 
@@ -205,7 +214,7 @@ public class BattleManager : MonoBehaviour
             Card nextCard = source.Stack[0];
             if (nextCard.Info.EnergyCost > source.CurrentEnergy) break;
             source.CurrentEnergy -= nextCard.Info.EnergyCost;
-            source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy);
+            yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
 
             source.Stack.RemoveAt(0);
             ConsoleInstance.Log($"Executing: {nextCard.Info.Title}");
@@ -240,13 +249,14 @@ public class BattleManager : MonoBehaviour
                 //     break;
 
                 case EffectType.ModEnergy:
-                    // FIXME:
                     target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
+                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
                     break;
 
                 case EffectType.ModEnergyNextTurn:
-                    // FIXME:
-                    target.CarryOverEnergy += ResolveValue(source, effect.Values[0]);
+                    int addAmount = ResolveValue(source, effect.Values[0]);
+                    target.CarryOverEnergy += addAmount;
+                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.AddTransparentEnergy(addAmount));
                     break;
 
                 // Add more cases here for other effects
