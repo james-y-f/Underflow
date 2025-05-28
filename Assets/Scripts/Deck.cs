@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 [System.Serializable]
 public class Deck : List<Card>
@@ -54,7 +54,7 @@ public class Deck : List<Card>
         }
 
         List<int> result = new List<int>();
-        for (int i = 0; i < viewSize; i++)
+        for (int i = 0; i < Math.Min(Count, viewSize); i++)
         {
             result.Add(i);
         }
@@ -147,7 +147,7 @@ public class Deck : List<Card>
     {
         StringBuilder builder = new StringBuilder();
         int limit = Math.Min(maxLine, Count);
-        Assert.LessOrEqual(minLine, limit);
+        Assert.IsTrue(minLine <= limit);
         for (int i = 0; i < limit; i++)
         {
             builder.AppendLine($"  {i}. {this[i].Info.GetDisplayText()}");
@@ -157,7 +157,7 @@ public class Deck : List<Card>
 
     void CheckInRange(int index)
     {
-        Assert.GreaterOrEqual(index, 0);
-        Assert.LessOrEqual(index, Count);
+        Assert.IsTrue(index >= 0);
+        Assert.IsTrue(index <= Count);
     }
 }

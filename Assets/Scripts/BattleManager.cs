@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine.InputSystem;
+using System.Collections;
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -33,12 +34,10 @@ public class BattleManager : MonoBehaviour
     [SerializeField] Entity Enemy;
     [SerializeField] EntityBaseStats PlayerBaseStats;
     [SerializeField] EntityBaseStats EnemyBaseStats;
-    [SerializeField] StackDisplay PlayerStackDisplay;
-    [SerializeField] StackDisplay EnemyStackDisplay;
 
     // --- UI References ---
     [SerializeField] bool ConsoleActiveAtStart = false;
-    DebugConsole Bert;
+    DebugConsole ConsoleInstance;
 
 
     // --- Unity Methods ---
@@ -54,10 +53,12 @@ public class BattleManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        Assert.IsNotNull(PlayerStackDisplay);
-        Assert.IsNotNull(EnemyStackDisplay);
-        Player = new Entity(PlayerBaseStats, true, PlayerStackDisplay);
-        Enemy = new Entity(EnemyBaseStats, false, EnemyStackDisplay);
+        StackDisplay playerStackDisplay = GameObject.FindGameObjectWithTag(Constants.PlayerStackTag).GetComponent<StackDisplay>();
+        StackDisplay enemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
+        Assert.IsNotNull(playerStackDisplay);
+        Assert.IsNotNull(enemyStackDisplay);
+        Player = new Entity(PlayerBaseStats, true, playerStackDisplay);
+        Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
         InputActions = new PlayerInputActions();
     }
     void OnEnable()
@@ -74,9 +75,9 @@ public class BattleManager : MonoBehaviour
 
     void Start()
     {
-        Bert = DebugConsole.Instance;
-        Bert.SwapCommand.AddListener(HandleSwapCommand);
-        Bert.gameObject.SetActive(ConsoleActiveAtStart);
+        ConsoleInstance = DebugConsole.Instance;
+        ConsoleInstance.SwapCommand.AddListener(HandleSwapCommand);
+        ConsoleInstance.gameObject.SetActive(ConsoleActiveAtStart);
 
         Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
         Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
@@ -89,55 +90,61 @@ public class BattleManager : MonoBehaviour
 
     void SetupGame()
     {
-        Bert.Log("Setting up game...");
+        CurrentState = BattleState.Setup;
+        ConsoleInstance.Log("Setting up game...");
 
-        ReloadDisplays();
+        LoadDisplays();
 
-        StartPlayerTurn();
+        StartCoroutine(StartPlayerTurn());
     }
 
-    void StartPlayerTurn()
+    IEnumerator StartPlayerTurn()
     {
-        if (GameIsOver) return;
-        CurrentState = BattleState.PlayerTurn;
+        if (GameIsOver) yield break;
+        ConsoleInstance.Log("\n---Player Turn---");
+        ConsoleInstance.LogValidCommands();
+
         Player.ResetEnergy();
-        Enemy.ResetEnergy();
-        UpdateDisplay();
-        Bert.Log("\n---Player Turn---");
-        Bert.LogValidCommands();
-        // TODO: have state change events so that console can log state changes
+
+        Player.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy));
+
+        Enemy.StackDisplay.EnergyDisplay.RemoveAllEnergy();
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.AddTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
+
+        CurrentState = BattleState.PlayerTurn;
     }
 
-    public void PlayerExecute()
+    public void PlayerEndTurn()
     {
-        if (CurrentState != BattleState.PlayerTurn)
-        {
-            return;
-        }
-        if (GameIsOver) return;
-
+        if (CurrentState != BattleState.PlayerTurn) return;
+        ConsoleInstance.Log("\n--- Executing Jobs ---");
         CurrentState = BattleState.PlayerExecution;
-        Bert.Log("\n--- Executing Jobs ---");
-        UpdateDisplay();
-        ExecuteTurn(Player);
-        if (GameIsOver) return;
-
-        // Transition to Enemy Turn
-        StartEnemyTurn();
+        StartCoroutine(PlayerExecute());
     }
 
-    void StartEnemyTurn()
+    IEnumerator PlayerExecute()
     {
-        if (GameIsOver) return;
+        yield return StartCoroutine(ExecuteTurnCoroutine(Player));
+        if (GameIsOver) yield break;
 
+        StartCoroutine(EnemyTurn());
+    }
+
+    IEnumerator EnemyTurn()
+    {
+        ConsoleInstance.Log("\n--- Enemy Turn ---");
         CurrentState = BattleState.EnemyTurn;
-        Bert.Log("\n--- Enemy Turn ---");
-        UpdateDisplay(); // Show state before enemy action
-        ExecuteTurn(Enemy);
-        if (GameIsOver) return;
+        // TODO: energy stuff here
+
+        Enemy.ResetEnergy();
+        Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy));
+        yield return StartCoroutine(ExecuteTurnCoroutine(Enemy));
+        if (GameIsOver) yield break;
 
         // Transition back to Player Turn
-        StartPlayerTurn();
+        StartCoroutine(StartPlayerTurn());
     }
 
     bool CheckGameOver()
@@ -167,11 +174,11 @@ public class BattleManager : MonoBehaviour
 
     void GameOver(string message)
     {
+        // TODO: make a display for this
         CurrentState = BattleState.GameOver;
-        Bert.Log("\n====================");
-        Bert.Log($"GAME OVER: {message}");
-        Bert.Log("====================");
-        UpdateDisplay();
+        ConsoleInstance.Log("\n====================");
+        ConsoleInstance.Log($"GAME OVER: {message}");
+        ConsoleInstance.Log("====================");
     }
 
 
@@ -183,39 +190,45 @@ public class BattleManager : MonoBehaviour
         int maxIdx = Math.Min(target.ViewSize, target.Stack.Count); // cannot operate on cards exceeding current size of deck
         if (currentIndex < 0 || targetIndex < 0 || currentIndex >= maxIdx || targetIndex >= maxIdx)
         {
-            Bert.Log("invalid index for swap");
+            ConsoleInstance.Log("invalid index for swap");
             return false;
         }
         List<int> newOrder = target.Stack.Swap(target.ViewSize, currentIndex, targetIndex, hard, bypassSwappability);
         if (newOrder == null)
         {
-            Bert.Log($"swap({currentIndex} -> {targetIndex}) failed");
+            ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) failed");
             return false;
         }
         target.StackDisplay.UpdateToOrder(newOrder);
-        Bert.Log($"swap({currentIndex} -> {targetIndex}) successful");
+        ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) successful");
         return true;
     }
 
-    void ExecuteTurn(Entity source)
+    IEnumerator ExecuteTurnCoroutine(Entity source)
     {
         Assert.IsNotNull(source);
         while (true)
         {
-            if (CheckGameOver()) return;
+            if (CheckGameOver()) break;
             // we know at this point that both stack still has cards remaining
             Card nextCard = source.Stack[0];
-            if (nextCard.Info.EnergyCost > source.CurrentEnergy) return;
+            if (nextCard.Info.EnergyCost > source.CurrentEnergy) break;
             source.CurrentEnergy -= nextCard.Info.EnergyCost;
+            yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
+
             source.Stack.RemoveAt(0);
+            ConsoleInstance.Log($"Executing: {nextCard.Info.Title}");
+            yield return StartCoroutine(source.StackDisplay.MoveTopCardToExecutionPos());
+
+            yield return StartCoroutine(ExecuteCardEffects(nextCard, source));
+
+            yield return StartCoroutine(source.StackDisplay.DiscardExecutingCard());
+
             source.Discard.Add(nextCard);
-            Bert.Log($"Executing: {nextCard.Info.Title}");
-            ExecuteCardEffects(nextCard, source);
-            UpdateDisplay();
         }
     }
 
-    void ExecuteCardEffects(Card card, Entity source)
+    IEnumerator ExecuteCardEffects(Card card, Entity source)
     {
         foreach (CardEffect effect in card.Effects)
         {
@@ -227,19 +240,23 @@ public class BattleManager : MonoBehaviour
                     break;
 
                 case EffectType.Delete:
-                    Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode);
+                    yield return StartCoroutine(Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode));
                     break;
 
-                case EffectType.Add:
-                    Add(new Card(effect.ReferenceCardTemplate), ResolveValue(source, effect.Values[0]), target, effect.Mode);
-                    break;
+                // FIXME:
+                // case EffectType.Add:
+                //     yield return StartCoroutine(Add(new Card(effect.ReferenceCardTemplate), ResolveValue(source, effect.Values[0]), target, effect.Mode));
+                //     break;
 
                 case EffectType.ModEnergy:
                     target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
+                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
                     break;
 
                 case EffectType.ModEnergyNextTurn:
-                    target.CarryOverEnergy += ResolveValue(source, effect.Values[0]);
+                    int addAmount = ResolveValue(source, effect.Values[0]);
+                    target.CarryOverEnergy += addAmount;
+                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.AddTransparentEnergy(addAmount));
                     break;
 
                 // Add more cases here for other effects
@@ -250,34 +267,37 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    void Delete(int amount, Entity target, EffectMode mode)
+    IEnumerator Delete(int amount, Entity target, EffectMode mode)
     {
-        if (amount < 1) return;
+        if (amount < 1) yield break;
         Assert.IsNotNull(target);
-        Bert.Log($"Deleted {amount} cards from {target.Name}");
+        ConsoleInstance.Log($"Deleting {amount} cards from {target.Name}");
         for (int i = 0; i < amount; i++)
         {
-            if (CheckGameOver()) { return; }
+            if (CheckGameOver()) yield break;
             // we now know that there are for sure cards left in target deck 
             int deleteIdx = ResolveIndex(mode, target.Stack.Count);
             Card deleted = target.Stack[deleteIdx];
             target.Stack.RemoveAt(deleteIdx);
+            yield return StartCoroutine(target.StackDisplay.DiscardCard(deleteIdx));
+
             target.Discard.Add(deleted);
-            Bert.Log($"deleted {deleteIdx}: {deleted.Info.GetDisplayText()}");
+            // TODO: add discard pile animation in the future
+            ConsoleInstance.Log($"deleted {deleteIdx}: {deleted.Info.GetDisplayText()}");
         }
     }
 
-    void Add(Card card, int amount, Entity target, EffectMode mode)
-    {
-        if (amount < 1) return;
-        Assert.IsNotNull(target);
-        for (int i = 0; i < amount; i++)
-        {
-            int addIdx = ResolveIndex(mode, target.Stack.Count);
-            target.Stack.Insert(addIdx, card);
-            Bert.Log($"added {card.Info.Title} to {addIdx}");
-        }
-    }
+    // void Add(Card card, int amount, Entity target, EffectMode mode)
+    // {
+    //     if (amount < 1) return;
+    //     Assert.IsNotNull(target);
+    //     for (int i = 0; i < amount; i++)
+    //     {
+    //         int addIdx = ResolveIndex(mode, target.Stack.Count);
+    //         target.Stack.Insert(addIdx, card);
+    //         ConsoleInstance.Log($"added {card.Info.Title} to {addIdx}");
+    //     }
+    // }
 
     // --- Event Handlers ---
 
@@ -296,31 +316,19 @@ public class BattleManager : MonoBehaviour
     }
     void ToggleConsole(InputAction.CallbackContext context)
     {
-        Debug.Log($"Toggling Console to {!Bert.gameObject.activeSelf}");
-        Bert.gameObject.SetActive(!Bert.gameObject.activeSelf);
+        Debug.Log($"Toggling Console to {!ConsoleInstance.gameObject.activeSelf}");
+        ConsoleInstance.gameObject.SetActive(!ConsoleInstance.gameObject.activeSelf);
     }
 
     // --- Helper Functions ---
 
-    void UpdateDisplay()
+    void LoadDisplays()
     {
-        // Displays
-        // This deletes everything and replaces them, inefficient but works for now
-        // TODO: replace this logic
-        ReloadDisplays();
-    }
-
-    void ReloadDisplays()
-    {
-        Player.StackDisplay.Clear();
-        Enemy.StackDisplay.Clear();
-        int playerViewSize = Math.Min(Player.ViewSize, Player.Stack.Count);
-        int enemyViewSize = Math.Min(Enemy.ViewSize, Enemy.Stack.Count);
-        for (int i = 0; i < playerViewSize; i++)
+        for (int i = 0; i < Player.Stack.Count; i++)
         {
             Player.StackDisplay.InsertCard(Player.Stack[i].Info);
         }
-        for (int i = 0; i < enemyViewSize; i++)
+        for (int i = 0; i < Enemy.Stack.Count; i++)
         {
             Enemy.StackDisplay.InsertCard(Enemy.Stack[i].Info);
         }

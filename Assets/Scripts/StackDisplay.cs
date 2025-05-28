@@ -1,42 +1,103 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.Assertions;
 using UnityEngine.Events;
+using TMPro;
 
 // TODO: implement an object pool for storing cards that are not in the window yet
-// TODO: make bypassing swappability work
+// TODO: make bypassing viewsize work
 
 public class StackDisplay : MonoBehaviour
 {
     public UnityEvent<bool, int, int> SwapAttempt;
-    public int BaseViewSize = 7;
-    // for now, current view size is just CardObjects.count
+    public String Name;
+    int viewSize;
+    public int ViewSize
+    {
+        get { return viewSize; }
+        set
+        {
+            viewSize = value;
+            if (LeftPos != null)
+            {
+                UpdateCardLocations();
+            }
+        }
+    }
     public bool DeckSwappable = true;
+    public EnergyDisplay EnergyDisplay;
     [SerializeField] GameObject CardPrefab;
     [SerializeField] bool IsPlayer;
-    Transform leftPos;
-    Transform rightPos;
+    Transform SpawnPoint;
+    Transform LeftPos;
+    Transform RightPos;
+    Transform ExecutionPos;
     [SerializeField] List<GameObject> CardObjects;
     List<Vector3> CardPos;
-    int LastViewSize;
-
+    GameObject ExecutingCard;
     GameObject HoveredCard;
     GameObject HeldCardObject;
     Coroutine HoldingCardCoroutine;
+    TMP_Text DisplayText;
 
     void Awake()
     {
         Assert.IsNotNull(CardPrefab);
-        leftPos = transform.Find("LeftmostCardPos");
-        rightPos = transform.Find("RightmostCardPos");
+        SpawnPoint = transform;
+        LeftPos = transform.Find("LeftmostCardPos");
+        RightPos = transform.Find("RightmostCardPos");
+        ExecutionPos = transform.Find("ExecutionPos");
+        EnergyDisplay = transform.Find("EnergyDisplay").GetComponent<EnergyDisplay>();
+        DisplayText = transform.Find("DisplayText").GetComponent<TMP_Text>();
         CardObjects = new List<GameObject>();
+        IsPlayer = gameObject.tag == Constants.PlayerStackTag;
+        DeckSwappable = IsPlayer; // for now, TODO: find a way to couple this with entity in battle manager
+    }
+
+    void Start()
+    {
         // precalculate the position for the first {ViewSize} cards
-        CalcCardPos(BaseViewSize);
-        LastViewSize = BaseViewSize + 1; // calcCardPos trigger when first called
+        CalcCardPos(ViewSize);
+    }
+
+    public IEnumerator MoveTopCardToExecutionPos()
+    {
+        ExecutingCard = CardObjects[0];
+        Assert.IsNotNull(ExecutingCard);
+        Debug.Log($"Moving {ExecutingCard.name} to Execution");
+        CardObjects.RemoveAt(0);
+        UpdateCardLocations();
+        yield return StartCoroutine(GetMotor(ExecutingCard).MoveCoroutine(ExecutionPos.position));
+    }
+
+    public IEnumerator DiscardExecutingCard()
+    {
+        Debug.Log($"Execution Done, Discarding {ExecutingCard.name}");
+        Assert.IsNotNull(ExecutingCard);
+
+        yield return new WaitForSeconds(Constants.StandardActionDelay);
+        yield return StartCoroutine(GetDisplay(ExecutingCard).FlashColor(Constants.ExecutionDoneColor));
+
+        Destroy(ExecutingCard);
+        ExecutingCard = null;
+        yield break; // placeholder line
+    }
+
+    public IEnumerator DiscardCard(int index = 0)
+    {
+        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        GameObject removedCard = CardObjects[index];
+
+        // TODO: add more animation in the future
+        yield return new WaitForSeconds(Constants.StandardActionDelay);
+        yield return GetDisplay(removedCard).FlashColor(Constants.DeletionEffectColor);
+
+        CardObjects.RemoveAt(index);
+        Destroy(removedCard);
+        UpdateCardLocations();
     }
 
     public void InsertCard(CardInfo info, int index = int.MaxValue)
@@ -46,10 +107,11 @@ public class StackDisplay : MonoBehaviour
             index = CardObjects.Count(); // default to inserting at the end
         }
         Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        GameObject card = Instantiate(CardPrefab, transform.position, CardPrefab.transform.rotation);
-        card.tag = IsPlayer ? "PlayerCard" : "EnemyCard";
-        card.layer = IsPlayer ? LayerMask.NameToLayer("PlayerCards") : LayerMask.NameToLayer("EnemyCards");
-        card.name = info.Title;
+        GameObject card = Instantiate(CardPrefab, SpawnPoint.position, CardPrefab.transform.rotation);
+        card.tag = IsPlayer ? Constants.PlayerCardTag : Constants.EnemyCardTag;
+        card.layer = IsPlayer ? LayerMask.NameToLayer(Constants.PlayerCardsLayerName)
+                              : LayerMask.NameToLayer(Constants.EnemyCardsLayerName);
+        card.name = $"{card.tag} {info.Title} {info.UID}";
         CardController controller = card.GetComponent<CardController>();
         controller.ParentStack = this;
         controller.CardDrop.AddListener(UpdateCardLocations);
@@ -59,14 +121,6 @@ public class StackDisplay : MonoBehaviour
         controller.CardUnHover.AddListener(HandleCardUnHover);
         controller.Info = info;
         CardObjects.Insert(index, card);
-        UpdateCardLocations();
-    }
-
-    public void RemoveCard(int index = 0)
-    {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        Destroy(CardObjects[index]);
-        CardObjects.RemoveAt(index);
         UpdateCardLocations();
     }
 
@@ -102,7 +156,7 @@ public class StackDisplay : MonoBehaviour
             Destroy(card);
         }
         CardObjects = new List<GameObject>();
-        CalcCardPos(BaseViewSize);
+        CalcCardPos(ViewSize);
     }
 
     void HandleCardHover(CardController card)
@@ -137,7 +191,7 @@ public class StackDisplay : MonoBehaviour
             Vector3 heldCardPos = HeldCardObject.transform.position;
             int closestCardPositionIndex = 0;
             float closestCardPositionDistance = Vector3.Distance(CardPos[0], heldCardPos);
-            for (int i = 1; i < CardPos.Count; i++)
+            for (int i = 1; i < Math.Min(CardPos.Count, CardObjects.Count); i++)
             {
                 float newDistance = Vector3.Distance(CardPos[i], heldCardPos);
                 if (newDistance < closestCardPositionDistance)
@@ -168,31 +222,63 @@ public class StackDisplay : MonoBehaviour
     // helper functions
     void CalcCardPos(int cardCount)
     {
-        if (LastViewSize <= BaseViewSize)
-        {
-            LastViewSize = cardCount;
-            return;
-        } // no need to recalc if we are already at 7 slots or less
-        LastViewSize = cardCount;
         CardPos = new List<Vector3>();
-        Vector3 left = leftPos.position;
+        Vector3 left = LeftPos.position;
         // only the x coordinate of rightPos really matters, since deck lays out horizontally
-        float xRight = rightPos.position.x;
+        float xRight = RightPos.position.x;
         CardPos.Add(left);
         float xInterval = (xRight - left.x) / (cardCount - 1);
         for (int i = 1; i < cardCount; i++)
         {
-            CardPos.Add(new Vector3(left.x + xInterval * i, CardMotor.BaseHeight, left.z));
+            CardPos.Add(new Vector3(left.x + xInterval * i, Constants.BaseHeight, left.z));
         }
     }
 
     void UpdateCardLocations()
     {
-        int newCount = CardObjects.Count;
-        CalcCardPos(newCount);
-        for (int i = 0; i < newCount; i++)
+        CalcCardPos(viewSize);
+        for (int i = 0; i < CardObjects.Count; i++)
         {
-            CardObjects[i].GetComponent<CardMotor>().Move(CardPos[i]);
+            GameObject card = CardObjects[i];
+            if (i < viewSize)
+            {
+                card.SetActive(true);
+                GetMotor(card).Move(CardPos[i]);
+            }
+            else
+            {
+                card.SetActive(false);
+                card.transform.position = SpawnPoint.position;
+            }
         }
+        DisplayText.text = $"{Name}\nCards Left: {CardObjects.Count}";
+        if (CardObjects.Count == 0)
+        {
+            DisplayText.text = $"{Name} Lost\nNo Cards Left In Deck";
+        }
+    }
+
+    CardController GetController(GameObject card)
+    {
+        Assert.IsNotNull(card);
+        CardController controller = card.GetComponent<CardController>();
+        Assert.IsNotNull(controller);
+        return controller;
+    }
+
+    CardMotor GetMotor(GameObject card)
+    {
+        Assert.IsNotNull(card);
+        CardMotor motor = card.GetComponent<CardMotor>();
+        Assert.IsNotNull(motor);
+        return motor;
+    }
+
+    CardDisplay GetDisplay(GameObject card)
+    {
+        Assert.IsNotNull(card);
+        CardDisplay display = card.GetComponent<CardDisplay>();
+        Assert.IsNotNull(display);
+        return display;
     }
 }

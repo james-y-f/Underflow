@@ -9,11 +9,29 @@ public class Entity
     public Deck Stack;
     public Deck Discard;
     public Deck Exile;
-    public int BaseViewSize;
-    public int ViewSizeModifier;
+    int baseViewSize;
+    public int BaseViewSize
+    {
+        get { return baseViewSize; }
+        set
+        {
+            baseViewSize = value;
+            StackDisplay.ViewSize = ViewSize;
+        }
+    }
+    int viewSizeMod;
+    public int ViewSizeModifier
+    {
+        get { return viewSizeMod; }
+        set
+        {
+            viewSizeMod = value;
+            StackDisplay.ViewSize = ViewSize;
+        }
+    }
     public int ViewSize
     {
-        get { return BaseViewSize + ViewSizeModifier; }
+        get { return baseViewSize + viewSizeMod; }
         private set { }
     }
     public int BaseEnergy;
@@ -28,7 +46,7 @@ public class Entity
         BaseStats = baseStats;
         IsPlayer = isPlayer;
         Name = BaseStats.Name;
-        BaseViewSize = BaseStats.BaseViewSize;
+        baseViewSize = BaseStats.BaseViewSize;
         BaseEnergy = BaseStats.BaseEnergy;
         ShuffleAtStart = BaseStats.ShuffleAtStart;
         ResetTemporaryStats();
@@ -43,13 +61,15 @@ public class Entity
         // every other deck (discard, exile) is by default swappable
         Stack.Swappable = isPlayer;
         StackDisplay = stackDisplay;
+        StackDisplay.ViewSize = ViewSize;
+        StackDisplay.Name = Name;
     }
 
     public void ResetTemporaryStats()
     {
         Discard = new Deck();
         Exile = new Deck();
-        ViewSizeModifier = 0;
+        viewSizeMod = 0;
         EnergyModifier = 0;
         CarryOverEnergy = 0;
         CurrentEnergy = 0;
