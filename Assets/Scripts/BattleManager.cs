@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Linq;
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -110,7 +111,7 @@ public class BattleManager : MonoBehaviour
         yield return StartCoroutine(Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy));
 
         Enemy.StackDisplay.EnergyDisplay.RemoveAllEnergy();
-        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.AddTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
 
         CurrentState = BattleState.PlayerTurn;
     }
@@ -135,7 +136,6 @@ public class BattleManager : MonoBehaviour
     {
         ConsoleInstance.Log("\n--- Enemy Turn ---");
         CurrentState = BattleState.EnemyTurn;
-        // TODO: energy stuff here
 
         Enemy.ResetEnergy();
         Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
@@ -243,6 +243,12 @@ public class BattleManager : MonoBehaviour
                     yield return StartCoroutine(Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode));
                     break;
 
+                case EffectType.Transform:
+                    Assert.IsNotNull(effect.ReferenceCardTemplate);
+                    yield return StartCoroutine(Transform(ResolveValue(source, effect.Values[0]), target,
+                                                          effect.Mode, effect.ReferenceCardTemplate));
+                    break;
+
                 // FIXME:
                 // case EffectType.Add:
                 //     yield return StartCoroutine(Add(new Card(effect.ReferenceCardTemplate), ResolveValue(source, effect.Values[0]), target, effect.Mode));
@@ -256,7 +262,7 @@ public class BattleManager : MonoBehaviour
                 case EffectType.ModEnergyNextTurn:
                     int addAmount = ResolveValue(source, effect.Values[0]);
                     target.CarryOverEnergy += addAmount;
-                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.AddTransparentEnergy(addAmount));
+                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetTransparentEnergy(target.CarryOverEnergy));
                     break;
 
                 // Add more cases here for other effects
@@ -272,18 +278,37 @@ public class BattleManager : MonoBehaviour
         if (amount < 1) yield break;
         Assert.IsNotNull(target);
         ConsoleInstance.Log($"Deleting {amount} cards from {target.Name}");
-        for (int i = 0; i < amount; i++)
+        List<int> deleteIndices = target.Stack.ResolveIndex(mode, amount, target.ViewSize);
+        List<Card> deleteList = new List<Card>();
+        foreach (int deleteIdx in deleteIndices)
         {
-            if (CheckGameOver()) yield break;
-            // we now know that there are for sure cards left in target deck 
-            int deleteIdx = ResolveIndex(mode, target.Stack.Count);
-            Card deleted = target.Stack[deleteIdx];
+            deleteList.Add(target.Stack[deleteIdx]);
+            target.StackDisplay.TargetCard(deleteIdx);
+        }
+        foreach (Card deleteTarget in deleteList)
+        {
+            int deleteIdx = target.Stack.FindIndex(x => x == deleteTarget);
             target.Stack.RemoveAt(deleteIdx);
-            yield return StartCoroutine(target.StackDisplay.DiscardCard(deleteIdx));
+            yield return StartCoroutine(target.StackDisplay.DeleteCard(deleteIdx));
 
-            target.Discard.Add(deleted);
-            // TODO: add discard pile animation in the future
-            ConsoleInstance.Log($"deleted {deleteIdx}: {deleted.Info.GetDisplayText()}");
+            target.Discard.Add(deleteTarget);
+            ConsoleInstance.Log($"deleted {deleteIdx}: {deleteTarget.Info.GetDisplayText()}");
+        }
+    }
+
+    IEnumerator Transform(int amount, Entity target, EffectMode mode, CardTemplate template)
+    {
+        if (amount < 1) yield break;
+        Assert.IsNotNull(target);
+        ConsoleInstance.Log($"Transforming {amount} cards from {target.Name} to {template.Info.Title}");
+        List<int> transformIndices = target.Stack.ResolveIndex(mode, amount, target.ViewSize);
+        foreach (int transformIdx in transformIndices)
+        {
+            Card transformTarget = target.Stack[transformIdx];
+            transformTarget.SetTemplate(template);
+            ConsoleInstance.Log($"transformed {transformIdx} to {transformTarget.Info.GetDisplayText()}");
+            target.StackDisplay.TargetCard(transformIdx);
+            yield return StartCoroutine(target.StackDisplay.TransformCard(template.Info, transformIdx));
         }
     }
 
@@ -349,22 +374,6 @@ public class BattleManager : MonoBehaviour
                 return Player;
             default:
                 return null;
-        }
-    }
-
-    int ResolveIndex(EffectMode mode, int stackSize)
-    {
-        switch (mode)
-        {
-            case EffectMode.Top:
-                return 0;
-            case EffectMode.Random:
-                return UnityEngine.Random.Range(0, stackSize - 1);
-            case EffectMode.Bottom:
-                return stackSize - 1;
-            default:
-                Debug.LogError("unable to resolve index");
-                return 0;
         }
     }
 

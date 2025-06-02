@@ -68,7 +68,7 @@ public class EnergyDisplay : MonoBehaviour
         }
     }
 
-    public IEnumerator AddTransparentEnergy(int amount)
+    IEnumerator AddTransparentEnergy(int amount)
     {
         if (amount < 1) yield break;
         Debug.Log($"Adding {amount} Transparent Energy");
@@ -83,9 +83,41 @@ public class EnergyDisplay : MonoBehaviour
         }
     }
 
+    IEnumerator RemoveTransparentEnergy(int amount)
+    {
+        if (amount < 1) yield break;
+        Debug.Log($"Removing {amount} Transparent Energy");
+        for (int i = 0; i < amount; i++)
+        {
+            GameObject removedStone = TransparentStones[TransparentStones.Count - 1];
+            yield return StartCoroutine(GetStoneComponent(removedStone).FlashColor(Constants.FlashHighlight));
+            TransparentStones.RemoveAt(Stones.Count - 1);
+            Destroy(removedStone);
+        }
+    }
+
+    public IEnumerator SetTransparentEnergy(int target)
+    {
+        Assert.IsTrue(target >= 0);
+        Debug.Log($"Setting Transparent Energy To {target}");
+        if (Stones.Count == target) yield break;
+        if (Stones.Count < target)
+        {
+            yield return StartCoroutine(AddTransparentEnergy(target - TransparentStones.Count));
+        }
+        else
+        {
+            yield return StartCoroutine(RemoveTransparentEnergy(TransparentStones.Count - target));
+        }
+    }
+
     public void RemoveAllEnergy()
     {
         Debug.Log($"Removing All  Energy");
+        foreach (GameObject stone in TransparentStones)
+        {
+            stone.transform.position -= Constants.EnergySpawnDisplacement * Stones.Count;
+        }
         foreach (GameObject stone in Stones)
         {
             Destroy(stone);

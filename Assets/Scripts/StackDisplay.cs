@@ -86,7 +86,23 @@ public class StackDisplay : MonoBehaviour
         yield break; // placeholder line
     }
 
-    public IEnumerator DiscardCard(int index = 0)
+    public void TargetCard(int index = 0)
+    {
+        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        GameObject removedCard = CardObjects[index];
+        GetMotor(removedCard).SetHover(true);
+        GetDisplay(removedCard).ShowSelectionHighlight();
+    }
+
+    public void UnargetCard(int index = 0)
+    {
+        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        GameObject removedCard = CardObjects[index];
+        GetMotor(removedCard).SetHover(false);
+        GetDisplay(removedCard).ResetColor();
+    }
+
+    public IEnumerator DeleteCard(int index = 0)
     {
         Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
         GameObject removedCard = CardObjects[index];
@@ -98,6 +114,18 @@ public class StackDisplay : MonoBehaviour
         CardObjects.RemoveAt(index);
         Destroy(removedCard);
         UpdateCardLocations();
+    }
+
+    public IEnumerator TransformCard(CardInfo newInfo, int index = 0)
+    {
+        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        GameObject transformedCard = CardObjects[index];
+
+        yield return new WaitForSeconds(Constants.StandardActionDelay);
+        yield return GetDisplay(transformedCard).FlashColor(Constants.FlashHighlight);
+        GetDisplay(transformedCard).UpdateTextDisplay(newInfo);
+        GetMotor(transformedCard).SetHover(false);
+        GetDisplay(transformedCard).ResetColor();
     }
 
     public void InsertCard(CardInfo info, int index = int.MaxValue)

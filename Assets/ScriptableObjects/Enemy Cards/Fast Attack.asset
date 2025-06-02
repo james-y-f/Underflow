@@ -10,33 +10,33 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0fd0f407cd374746bb5f7f327ae3c60, type: 3}
-  m_Name: Overclock
+  m_Name: Fast Attack
   m_EditorClassIdentifier: 
   Info:
-    Title: Overclock
+    Title: Attack 2.0
     OverrideGeneratedDescription: 0
     OverrideDescription: 
-    Description: 'Delete 1 card from the top of the owner''s deck;
+    Description: 'Delete 3 cards from the top of the opponent''s deck.
 
-      Gain 2
-      energy'
-    EnergyCost: 1
+      Gain
+      1 energy next turn'
+    EnergyCost: 2
     Rarity: 0
     Swappable: 1
     UID: 0
   Effects:
   - Type: 2
-    Target: 3
+    Target: 2
     Mode: 1
     Values:
     - Type: 1
-      Constant: 1
+      Constant: 3
     ReferenceCardTemplate: {fileID: 0}
-  - Type: 4
+  - Type: 5
     Target: 3
     Mode: 0
     Values:
     - Type: 1
-      Constant: 2
+      Constant: 1
     ReferenceCardTemplate: {fileID: 0}
   OnDeleteEffects: []

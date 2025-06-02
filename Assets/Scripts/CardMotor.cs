@@ -7,6 +7,7 @@ public class CardMotor : MonoBehaviour
     Coroutine ActiveCoroutine;
 
     Vector3 CurrentTargetPosition;
+    bool hovering = false;
 
     void Awake()
     {
@@ -28,6 +29,7 @@ public class CardMotor : MonoBehaviour
 
     public void SetHover(bool hover)
     {
+        hovering = hover;
         float newHeight = hover ? Constants.BaseHeight + Constants.HoverHeight : Constants.BaseHeight;
         Vector3 newPos = new Vector3(CurrentTargetPosition.x, newHeight, CurrentTargetPosition.z);
         Snap(newPos);

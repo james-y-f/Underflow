@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Info:
     Title: Power Surge
-    Description: 'Delete 3 cards from the top of the opponent''s deck;
+    OverrideGeneratedDescription: 0
+    OverrideDescription: 
+    Description: 'Delete 3 cards from the top of the opponent''s stack;
 
       The
       opponent gains 1 energy next turn'

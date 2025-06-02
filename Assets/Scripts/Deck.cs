@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -53,11 +54,7 @@ public class Deck : List<Card>
             return null;
         }
 
-        List<int> result = new List<int>();
-        for (int i = 0; i < Math.Min(Count, viewSize); i++)
-        {
-            result.Add(i);
-        }
+        List<int> result = Enumerable.Range(0, Math.Min(Count, viewSize)).ToList();
         CheckInRange(currentIndex);
         CheckInRange(targetIndex);
         Card currentCard = this[currentIndex];
@@ -159,5 +156,39 @@ public class Deck : List<Card>
     {
         Assert.IsTrue(index >= 0);
         Assert.IsTrue(index <= Count);
+    }
+
+    public List<int> ResolveIndex(EffectMode mode, int amount, int viewSize)
+    {
+        if (amount < 1) return null;
+        switch (mode)
+        {
+            case EffectMode.Top:
+                return Enumerable.Range(0, Math.Min(Count, amount)).ToList();
+            case EffectMode.RandomFromView:
+                return SelectRandomListFromRange(0, Math.Min(viewSize, Count), amount);
+            case EffectMode.RandomFromDeck:
+                return SelectRandomListFromRange(0, Count, amount);
+            case EffectMode.Bottom:
+                return Enumerable.Range(Math.Min(0, Count - amount), amount).ToList();
+            default:
+                Debug.LogError("unable to resolve index");
+                return null;
+        }
+    }
+
+    List<int> SelectRandomListFromRange(int startInclusive, int endExclusive, int amount)
+    {
+        if (amount < 1) return null;
+        List<int> options = Enumerable.Range(startInclusive, endExclusive).ToList();
+        if (endExclusive - startInclusive <= amount) return options;
+        List<int> selected = new List<int>();
+        for (int i = 0; i < amount; i++)
+        {
+            int selectionIndex = UnityEngine.Random.Range(0, options.Count);
+            selected.Add(options[selectionIndex]);
+            options.RemoveAt(selectionIndex);
+        }
+        return selected;
     }
 }

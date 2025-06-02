@@ -14,10 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Info:
     Title: Advanced Attack
-    Description: 'Delete 3 cards from the top of the opponent''s deck;
-
-      Gain
-      1 energy next turn'
+    OverrideGeneratedDescription: 0
+    OverrideDescription: 
+    Description: Delete 4 cards from the top of the opponent's deck
     EnergyCost: 2
     Rarity: 0
     Swappable: 1
@@ -28,13 +27,6 @@ MonoBehaviour:
     Mode: 1
     Values:
     - Type: 1
-      Constant: 3
-    ReferenceCardTemplate: {fileID: 0}
-  - Type: 5
-    Target: 3
-    Mode: 0
-    Values:
-    - Type: 1
-      Constant: 1
+      Constant: 4
     ReferenceCardTemplate: {fileID: 0}
   OnDeleteEffects: []
