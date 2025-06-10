@@ -7,7 +7,8 @@ public class CardMotor : MonoBehaviour
     Coroutine ActiveCoroutine;
 
     Vector3 CurrentTargetPosition;
-    bool hovering = false;
+    public bool InView = false;
+    bool Hovering = false;
 
     void Awake()
     {
@@ -29,7 +30,8 @@ public class CardMotor : MonoBehaviour
 
     public void SetHover(bool hover)
     {
-        hovering = hover;
+        if (!InView) return;
+        Hovering = hover;
         float newHeight = hover ? Constants.BaseHeight + Constants.HoverHeight : Constants.BaseHeight;
         Vector3 newPos = new Vector3(CurrentTargetPosition.x, newHeight, CurrentTargetPosition.z);
         Snap(newPos);
@@ -47,18 +49,36 @@ public class CardMotor : MonoBehaviour
     {
         while (Vector3.Distance(Rb.position, targetPosition) > Constants.PosTolerance)
         {
+            targetPosition.y = ProcessHeight(targetPosition.y);
             Rb.MovePosition(Vector3.Lerp(Rb.position, targetPosition, moveSpeedFactor * Time.fixedDeltaTime));
             yield return new WaitForFixedUpdate();
         }
         Snap(targetPosition);
     }
 
-    void Snap(Vector3 targetPosition)
+    public void TurnFace(bool faceUp)
+    {
+        Quaternion targetRotation = faceUp ? Constants.FaceUp : Constants.FaceDown;
+        Rotate(targetRotation);
+    }
+
+    void Rotate(Quaternion targetRotation)
+    {
+        Rb.MoveRotation(targetRotation);
+    }
+
+    public void Snap(Vector3 targetPosition)
     {
         if (ActiveCoroutine != null)
         {
             StopCoroutine(ActiveCoroutine);
         }
         Rb.MovePosition(targetPosition);
+    }
+
+    float ProcessHeight(float targetHeight)
+    {
+        if (!InView) return targetHeight;
+        return Hovering ? Constants.BaseHeight + Constants.HoverHeight : Constants.BaseHeight;
     }
 }

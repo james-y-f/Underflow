@@ -12,15 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0fd0f407cd374746bb5f7f327ae3c60, type: 3}
   m_Name: Advanced Attack
   m_EditorClassIdentifier: 
-  Info:
-    Title: Advanced Attack
-    OverrideGeneratedDescription: 0
-    OverrideDescription: 
-    Description: Delete 4 cards from the top of the opponent's deck
-    EnergyCost: 2
-    Rarity: 0
-    Swappable: 1
-    UID: 0
+  Title: Advanced Attack
+  OverrideGeneratedDescription: 0
+  OverrideEffectDescription: 
+  EnergyCost: 2
+  Rarity: 0
+  Properties: 
   Effects:
   - Type: 2
     Target: 2

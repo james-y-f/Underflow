@@ -12,15 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0fd0f407cd374746bb5f7f327ae3c60, type: 3}
   m_Name: NOP shuffle
   m_EditorClassIdentifier: 
-  Info:
-    Title: NOP Shuffle
-    OverrideGeneratedDescription: 0
-    Description: 'Transform 3 random cards in the opponent''s window into NOP ([1]:
-      Does nothing)'
-    EnergyCost: 1
-    Rarity: 0
-    Swappable: 1
-    UID: 0
+  Title: NOP Shuffle
+  OverrideGeneratedDescription: 0
+  OverrideEffectDescription: 
+  EnergyCost: 1
+  Rarity: 0
+  Properties: 
   Effects:
   - Type: 6
     Target: 2

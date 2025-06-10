@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.InputSystem;
 using System.Collections;
-using System.Linq;
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -35,11 +34,14 @@ public class BattleManager : MonoBehaviour
     [SerializeField] Entity Enemy;
     [SerializeField] EntityBaseStats PlayerBaseStats;
     [SerializeField] EntityBaseStats EnemyBaseStats;
+    [SerializeField] ButtonController ExecuteNextButton;
+
+    [SerializeField] ButtonController EndTurnButton;
+    [SerializeField] ButtonController ExecuteAllButton;
 
     // --- UI References ---
     [SerializeField] bool ConsoleActiveAtStart = false;
     DebugConsole ConsoleInstance;
-
 
     // --- Unity Methods ---
     void Awake()
@@ -58,9 +60,19 @@ public class BattleManager : MonoBehaviour
         StackDisplay enemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
         Assert.IsNotNull(playerStackDisplay);
         Assert.IsNotNull(enemyStackDisplay);
+
+        ExecuteNextButton = GameObject.FindGameObjectWithTag(Constants.ExecuteNextButtonTag).GetComponent<ButtonController>();
+        EndTurnButton = GameObject.FindGameObjectWithTag(Constants.EndTurnButtonTag).GetComponent<ButtonController>();
+        ExecuteAllButton = GameObject.FindGameObjectWithTag(Constants.ExecuteAllButtonTag).GetComponent<ButtonController>();
+        Assert.IsNotNull(ExecuteNextButton);
+        Assert.IsNotNull(EndTurnButton);
+        Assert.IsNotNull(ExecuteAllButton);
+
         Player = new Entity(PlayerBaseStats, true, playerStackDisplay);
         Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
         InputActions = new PlayerInputActions();
+
+
     }
     void OnEnable()
     {
@@ -83,6 +95,10 @@ public class BattleManager : MonoBehaviour
         Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
         Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
 
+        ExecuteNextButton.OnClick.AddListener(PlayerExecuteNext);
+        EndTurnButton.OnClick.AddListener(PlayerEndTurn);
+        ExecuteAllButton.OnClick.AddListener(PlayerExecuteAll);
+
         CurrentState = BattleState.Setup;
         SetupGame();
     }
@@ -101,9 +117,12 @@ public class BattleManager : MonoBehaviour
 
     IEnumerator StartPlayerTurn()
     {
-        if (GameIsOver) yield break;
+        if (CheckGameOver(Player)) yield break;
         ConsoleInstance.Log("\n---Player Turn---");
         ConsoleInstance.LogValidCommands();
+        ExecuteNextButton.SetInteractible(true);
+        ExecuteAllButton.SetInteractible(true);
+        EndTurnButton.SetInteractible(false); // player must execute at least one card per turn
 
         Player.ResetEnergy();
 
@@ -116,57 +135,76 @@ public class BattleManager : MonoBehaviour
         CurrentState = BattleState.PlayerTurn;
     }
 
-    public void PlayerEndTurn()
+    public void PlayerExecuteNext()
     {
-        if (CurrentState != BattleState.PlayerTurn) return;
-        ConsoleInstance.Log("\n--- Executing Jobs ---");
-        CurrentState = BattleState.PlayerExecution;
-        StartCoroutine(PlayerExecute());
+        if (CurrentState != BattleState.PlayerTurn && CurrentState != BattleState.PlayerExecution) return;
+        if (CurrentState == BattleState.PlayerTurn)
+        {
+            CurrentState = BattleState.PlayerExecution;
+        }
+        if (CheckNextCardExecutable(Player))
+        {
+            SetAllButtonsInteractible(false);
+            StartCoroutine(ExecuteNextCoroutine(Player));
+        }
     }
 
-    IEnumerator PlayerExecute()
+    public void PlayerEndTurn()
     {
-        yield return StartCoroutine(ExecuteTurnCoroutine(Player));
-        if (GameIsOver) yield break;
-
+        if (CurrentState != BattleState.PlayerTurn && CurrentState != BattleState.PlayerExecution) return;
+        SetAllButtonsInteractible(false);
         StartCoroutine(EnemyTurn());
+    }
+
+    public void PlayerExecuteAll()
+    {
+        if (CurrentState != BattleState.PlayerTurn && CurrentState != BattleState.PlayerExecution) return;
+        ConsoleInstance.Log("\n--- Executing All Cards ---");
+        CurrentState = BattleState.PlayerExecution;
+        SetAllButtonsInteractible(false);
+        StartCoroutine(PlayerExecuteAllCoroutine());
+    }
+
+    IEnumerator PlayerExecuteAllCoroutine()
+    {
+        yield return StartCoroutine(ExecuteAllCoroutine(Player));
+        PlayerEndTurn();
     }
 
     IEnumerator EnemyTurn()
     {
+        if (CheckGameOver(Enemy)) yield break;
         ConsoleInstance.Log("\n--- Enemy Turn ---");
         CurrentState = BattleState.EnemyTurn;
 
         Enemy.ResetEnergy();
         Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
         yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy));
-        yield return StartCoroutine(ExecuteTurnCoroutine(Enemy));
+        yield return StartCoroutine(ExecuteAllCoroutine(Enemy));
         if (GameIsOver) yield break;
 
         // Transition back to Player Turn
         StartCoroutine(StartPlayerTurn());
     }
 
-    bool CheckGameOver()
+
+    // At the beginning of your turn, if you have no cards, then you lose
+    bool CheckGameOver(Entity source)
     {
         if (GameIsOver)
         {
             return true;
         }
-        if (Enemy.Stack.Count == 0 && Player.Stack.Count == 0)
+        if (source.Stack.Count == 0)
         {
-            Debug.LogError("Tie, This probably shouldn't happen");
-            GameOver("TIE?");
-            return true;
-        }
-        else if (Enemy.Stack.Count == 0)
-        {
-            GameOver("YOU WIN! ENEMY STACK DEPLETED!");
-            return true;
-        }
-        else if (Player.Stack.Count == 0)
-        {
-            GameOver("YOU LOST! YOUR STACK IS DEPLETED!");
+            if (source == Player)
+            {
+                GameOver("YOU LOST! YOUR STACK IS DEPLETED!");
+            }
+            else if (source == Enemy)
+            {
+                GameOver("YOU WIN! ENEMY STACK DEPLETED!");
+            }
             return true;
         }
         return false;
@@ -204,27 +242,41 @@ public class BattleManager : MonoBehaviour
         return true;
     }
 
-    IEnumerator ExecuteTurnCoroutine(Entity source)
+    IEnumerator ExecuteNextCoroutine(Entity source, bool executingAll = false)
+    {
+        if (!executingAll && !CheckNextCardExecutable(source)) yield break;
+        Card nextCard = source.Stack[0];
+        source.CurrentEnergy -= nextCard.EnergyCost;
+        yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
+
+        source.Stack.RemoveAt(0);
+        ConsoleInstance.Log($"Executing: {nextCard.Title}");
+        yield return StartCoroutine(source.StackDisplay.MoveTopCardToExecutionPos());
+
+        yield return StartCoroutine(ExecuteCardEffects(nextCard, source));
+
+        yield return StartCoroutine(source.StackDisplay.DiscardExecutingCard());
+        source.Discard.Add(nextCard);
+
+        if (source == Player && !executingAll)
+        {
+            if (CheckNextCardExecutable(Player))
+            {
+                SetAllButtonsInteractible(true);
+            }
+            else
+            {
+                EndTurnButton.SetInteractible(true);
+            }
+        }
+    }
+
+    IEnumerator ExecuteAllCoroutine(Entity source)
     {
         Assert.IsNotNull(source);
-        while (true)
+        while (CheckNextCardExecutable(source))
         {
-            if (CheckGameOver()) break;
-            // we know at this point that both stack still has cards remaining
-            Card nextCard = source.Stack[0];
-            if (nextCard.Info.EnergyCost > source.CurrentEnergy) break;
-            source.CurrentEnergy -= nextCard.Info.EnergyCost;
-            yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
-
-            source.Stack.RemoveAt(0);
-            ConsoleInstance.Log($"Executing: {nextCard.Info.Title}");
-            yield return StartCoroutine(source.StackDisplay.MoveTopCardToExecutionPos());
-
-            yield return StartCoroutine(ExecuteCardEffects(nextCard, source));
-
-            yield return StartCoroutine(source.StackDisplay.DiscardExecutingCard());
-
-            source.Discard.Add(nextCard);
+            yield return StartCoroutine(ExecuteNextCoroutine(source, true));
         }
     }
 
@@ -232,44 +284,59 @@ public class BattleManager : MonoBehaviour
     {
         foreach (CardEffect effect in card.Effects)
         {
-            Entity target = ResolveTarget(source, effect.Target);
-            Assert.IsNotNull(target);
-            switch (effect.Type)
-            {
-                case EffectType.NoEffect:
-                    break;
+            yield return StartCoroutine(ExecuteEffect(effect, source));
+        }
+    }
 
-                case EffectType.Delete:
-                    yield return StartCoroutine(Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode));
-                    break;
+    IEnumerator ExecuteCardOnDeleteEffects(Card card, Entity source)
+    {
+        foreach (CardEffect effect in card.OnDeleteEffects)
+        {
+            yield return StartCoroutine(ExecuteEffect(effect, source));
+        }
+    }
 
-                case EffectType.Transform:
-                    Assert.IsNotNull(effect.ReferenceCardTemplate);
-                    yield return StartCoroutine(Transform(ResolveValue(source, effect.Values[0]), target,
-                                                          effect.Mode, effect.ReferenceCardTemplate));
-                    break;
+    IEnumerator ExecuteEffect(CardEffect effect, Entity source)
+    {
+        if (effect.Type == EffectType.NoEffect) yield break;
+        Entity target = ResolveTarget(source, effect.Target);
+        Assert.IsNotNull(target);
+        switch (effect.Type)
+        {
+            case EffectType.Delete:
+                yield return StartCoroutine(Delete(ResolveValue(source, effect.Values[0]), target, effect.Mode));
+                break;
 
-                // FIXME:
-                // case EffectType.Add:
-                //     yield return StartCoroutine(Add(new Card(effect.ReferenceCardTemplate), ResolveValue(source, effect.Values[0]), target, effect.Mode));
-                //     break;
+            case EffectType.Transform:
+                Assert.IsNotNull(effect.ReferenceCardTemplate);
+                yield return StartCoroutine(Transform(ResolveValue(source, effect.Values[0]), target,
+                                                      effect.Mode, effect.ReferenceCardTemplate));
+                break;
 
-                case EffectType.ModEnergy:
-                    target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
-                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
-                    break;
+            case EffectType.Add:
+                yield return StartCoroutine(Add(ResolveValue(source, effect.Values[0]), target,
+                                                effect.Mode, effect.ReferenceCardTemplate));
+                break;
 
-                case EffectType.ModEnergyNextTurn:
-                    int addAmount = ResolveValue(source, effect.Values[0]);
-                    target.CarryOverEnergy += addAmount;
-                    yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetTransparentEnergy(target.CarryOverEnergy));
-                    break;
+            case EffectType.ModEnergy:
+                target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
+                break;
 
-                // Add more cases here for other effects
-                default:
-                    Debug.LogError($"Effect type '{effect.Type}' not implemented.");
-                    break;
-            }
+            case EffectType.ModEnergyNextTurn:
+                int addAmount = ResolveValue(source, effect.Values[0]);
+                target.CarryOverEnergy += addAmount;
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetTransparentEnergy(target.CarryOverEnergy));
+                break;
+
+            case EffectType.MakeUnswappable:
+                yield return StartCoroutine(MakeUnswappable(ResolveValue(source, effect.Values[0]), target, effect.Mode));
+                break;
+
+            // Add more cases here for other effects
+            default:
+                Debug.LogError($"Effect type '{effect.Type}' not implemented.");
+                break;
         }
     }
 
@@ -288,11 +355,21 @@ public class BattleManager : MonoBehaviour
         foreach (Card deleteTarget in deleteList)
         {
             int deleteIdx = target.Stack.FindIndex(x => x == deleteTarget);
+            if (deleteIdx == -1) continue; // means we didn't find the card
             target.Stack.RemoveAt(deleteIdx);
-            yield return StartCoroutine(target.StackDisplay.DeleteCard(deleteIdx));
 
+            if (deleteTarget.OnDeleteEffects.Count > 0)
+            {
+                yield return StartCoroutine(target.StackDisplay.MoveTopCardToExecutionPos());
+                yield return ExecuteCardOnDeleteEffects(deleteTarget, target);
+                yield return StartCoroutine(target.StackDisplay.DiscardExecutingCard());
+            }
+            else
+            {
+                yield return StartCoroutine(target.StackDisplay.DeleteCard(deleteIdx));
+            }
             target.Discard.Add(deleteTarget);
-            ConsoleInstance.Log($"deleted {deleteIdx}: {deleteTarget.Info.GetDisplayText()}");
+            ConsoleInstance.Log($"deleted {deleteIdx}: {deleteTarget.Title}");
         }
     }
 
@@ -300,29 +377,48 @@ public class BattleManager : MonoBehaviour
     {
         if (amount < 1) yield break;
         Assert.IsNotNull(target);
-        ConsoleInstance.Log($"Transforming {amount} cards from {target.Name} to {template.Info.Title}");
+        ConsoleInstance.Log($"Transforming {amount} cards from {target.Name} to {template.Title}");
         List<int> transformIndices = target.Stack.ResolveIndex(mode, amount, target.ViewSize);
         foreach (int transformIdx in transformIndices)
         {
             Card transformTarget = target.Stack[transformIdx];
             transformTarget.SetTemplate(template);
-            ConsoleInstance.Log($"transformed {transformIdx} to {transformTarget.Info.GetDisplayText()}");
+            ConsoleInstance.Log($"transformed {transformIdx} to {transformTarget.Title}");
             target.StackDisplay.TargetCard(transformIdx);
-            yield return StartCoroutine(target.StackDisplay.TransformCard(template.Info, transformIdx));
+            yield return StartCoroutine(target.StackDisplay.TransformCard(transformTarget, transformIdx));
         }
     }
 
-    // void Add(Card card, int amount, Entity target, EffectMode mode)
-    // {
-    //     if (amount < 1) return;
-    //     Assert.IsNotNull(target);
-    //     for (int i = 0; i < amount; i++)
-    //     {
-    //         int addIdx = ResolveIndex(mode, target.Stack.Count);
-    //         target.Stack.Insert(addIdx, card);
-    //         ConsoleInstance.Log($"added {card.Info.Title} to {addIdx}");
-    //     }
-    // }
+    IEnumerator MakeUnswappable(int amount, Entity target, EffectMode mode)
+    {
+        if (amount < 1) yield break;
+        Assert.IsNotNull(target);
+        ConsoleInstance.Log($"Making {amount} cards from {target.Name} Unswappable");
+        List<int> transformIndices = target.Stack.ResolveIndex(mode, amount, target.ViewSize);
+        foreach (int transformIdx in transformIndices)
+        {
+            Card transformTarget = target.Stack[transformIdx];
+            transformTarget.AddProperty(Property.Unswappable);
+            ConsoleInstance.Log($"made {transformIdx} {transformTarget.Title} unswappable");
+            target.StackDisplay.TargetCard(transformIdx);
+            yield return StartCoroutine(target.StackDisplay.TransformCard(transformTarget, transformIdx));
+        }
+    }
+
+    IEnumerator Add(int amount, Entity target, EffectMode mode, CardTemplate template)
+    {
+        if (amount < 1) yield break;
+        Assert.IsNotNull(target);
+        ConsoleInstance.Log($"Adding {amount} {template.Title} to {target.Name}");
+        for (int i = 0; i < amount; i++)
+        {
+            int addIdx = target.Stack.ResolveIndex(mode, 1, target.ViewSize)[0];
+            Card newCard = new Card(template);
+            target.Stack.Insert(addIdx, newCard);
+            ConsoleInstance.Log($"added {newCard.Title} to {addIdx}");
+            yield return StartCoroutine(target.StackDisplay.AddCard(newCard, addIdx));
+        }
+    }
 
     // --- Event Handlers ---
 
@@ -351,11 +447,11 @@ public class BattleManager : MonoBehaviour
     {
         for (int i = 0; i < Player.Stack.Count; i++)
         {
-            Player.StackDisplay.InsertCard(Player.Stack[i].Info);
+            Player.StackDisplay.InsertCardNoAnim(Player.Stack[i]);
         }
         for (int i = 0; i < Enemy.Stack.Count; i++)
         {
-            Enemy.StackDisplay.InsertCard(Enemy.Stack[i].Info);
+            Enemy.StackDisplay.InsertCardNoAnim(Enemy.Stack[i]);
         }
     }
 
@@ -385,6 +481,18 @@ public class BattleManager : MonoBehaviour
         }
         // FIXME: finish this
         return 0;
+    }
+
+    bool CheckNextCardExecutable(Entity source)
+    {
+        return source.Stack.Count > 0 && source.CurrentEnergy >= source.Stack[0].EnergyCost;
+    }
+
+    void SetAllButtonsInteractible(bool interactible)
+    {
+        ExecuteNextButton.SetInteractible(interactible);
+        EndTurnButton.SetInteractible(interactible);
+        ExecuteAllButton.SetInteractible(interactible);
     }
 
     public string PrintDebugStatus()

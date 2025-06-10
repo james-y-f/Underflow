@@ -15,7 +15,7 @@ public class Deck : List<Card>
     {
         foreach (CardTemplate card in template.Cards)
         {
-            Debug.Log($"adding {card.Info.Title}");
+            Debug.Log($"adding {card.Title}");
             Add(new Card(card));
         }
     }
@@ -60,7 +60,7 @@ public class Deck : List<Card>
         Card currentCard = this[currentIndex];
 
         // check if the operation is possible
-        if (!currentCard.Info.Swappable && !bypassSwappability)
+        if (!currentCard.Swappable && !bypassSwappability)
         {
             Debug.LogError("current card is not swappable");
             return null;
@@ -70,7 +70,7 @@ public class Deck : List<Card>
         if (hard)
         {
             Card targetCard = this[targetIndex];
-            if (!targetCard.Info.Swappable && !bypassSwappability)
+            if (!targetCard.Swappable && !bypassSwappability)
             {
                 Debug.LogError("target card is not swappable");
                 return null;
@@ -81,7 +81,7 @@ public class Deck : List<Card>
             // swap these two things in the result vector too
             result[currentIndex] = targetIndex;
             result[targetIndex] = currentIndex;
-            Debug.Log($"hard swapped {currentIndex}: {currentCard.Info.Title} and {targetIndex}: {targetCard.Info.Title}");
+            Debug.Log($"hard swapped {currentIndex}: {currentCard.Title} and {targetIndex}: {targetCard.Title}");
             return result;
         }
 
@@ -95,7 +95,7 @@ public class Deck : List<Card>
         List<Card> affectedCards = new List<Card>();
         for (int i = minIndex; i <= maxIndex; i++)
         {
-            if (this[i].Info.Swappable || bypassSwappability)
+            if (this[i].Swappable || bypassSwappability)
             {
                 affectedIndices.Add(i);
                 affectedCards.Add(this[i]);
@@ -129,7 +129,7 @@ public class Deck : List<Card>
         {
             result[affectedIndices[i]] = affectedIndicesSwapped[i];
         }
-        Debug.Log($"swapped {currentIndex}: {temp.Info.GetDisplayText()} to {targetIndex}");
+        Debug.Log($"swapped {currentIndex}: {temp.Title} to {targetIndex}");
         StringBuilder builder = new StringBuilder();
         builder.Append("output order:[ ");
         foreach (int i in result)
@@ -147,7 +147,7 @@ public class Deck : List<Card>
         Assert.IsTrue(minLine <= limit);
         for (int i = 0; i < limit; i++)
         {
-            builder.AppendLine($"  {i}. {this[i].Info.GetDisplayText()}");
+            builder.AppendLine($"  {i}. {this[i].Title}");
         }
         return builder.ToString();
     }

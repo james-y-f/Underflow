@@ -13,7 +13,7 @@ using TMPro;
 public class StackDisplay : MonoBehaviour
 {
     public UnityEvent<bool, int, int> SwapAttempt;
-    public String Name;
+    public string Name;
     int viewSize;
     public int ViewSize
     {
@@ -21,7 +21,7 @@ public class StackDisplay : MonoBehaviour
         set
         {
             viewSize = value;
-            if (LeftPos != null)
+            if (LeftPos != null) // so that this only runs after Start()
             {
                 UpdateCardLocations();
             }
@@ -37,7 +37,7 @@ public class StackDisplay : MonoBehaviour
     Transform ExecutionPos;
     [SerializeField] List<GameObject> CardObjects;
     List<Vector3> CardPos;
-    GameObject ExecutingCard;
+    Stack<GameObject> ExecutingCards;
     GameObject HoveredCard;
     GameObject HeldCardObject;
     Coroutine HoldingCardCoroutine;
@@ -46,69 +46,65 @@ public class StackDisplay : MonoBehaviour
     void Awake()
     {
         Assert.IsNotNull(CardPrefab);
-        SpawnPoint = transform;
+        SpawnPoint = transform.Find("SpawnPoint");
         LeftPos = transform.Find("LeftmostCardPos");
         RightPos = transform.Find("RightmostCardPos");
         ExecutionPos = transform.Find("ExecutionPos");
         EnergyDisplay = transform.Find("EnergyDisplay").GetComponent<EnergyDisplay>();
-        DisplayText = transform.Find("DisplayText").GetComponent<TMP_Text>();
+        DisplayText = transform.Find("Display").transform.Find("DisplayText").GetComponent<TMP_Text>();
         CardObjects = new List<GameObject>();
+        ExecutingCards = new Stack<GameObject>();
         IsPlayer = gameObject.tag == Constants.PlayerStackTag;
         DeckSwappable = IsPlayer; // for now, TODO: find a way to couple this with entity in battle manager
-    }
-
-    void Start()
-    {
-        // precalculate the position for the first {ViewSize} cards
         CalcCardPos(ViewSize);
     }
 
     public IEnumerator MoveTopCardToExecutionPos()
     {
-        ExecutingCard = CardObjects[0];
-        Assert.IsNotNull(ExecutingCard);
-        Debug.Log($"Moving {ExecutingCard.name} to Execution");
+        Assert.IsNotNull(CardObjects[0]);
+        ExecutingCards.Push(CardObjects[0]);
+        Debug.Log($"Moving {ExecutingCards.Peek().name} to Execution");
         CardObjects.RemoveAt(0);
         UpdateCardLocations();
-        yield return StartCoroutine(GetMotor(ExecutingCard).MoveCoroutine(ExecutionPos.position));
+        Vector3 executionPos = new Vector3(ExecutionPos.position.x, ExecutionPos.position.y + (ExecutingCards.Count - 1) * Constants.CardHeight, ExecutionPos.position.z);
+        yield return StartCoroutine(GetMotor(ExecutingCards.Peek()).MoveCoroutine(executionPos));
     }
 
     public IEnumerator DiscardExecutingCard()
     {
-        Debug.Log($"Execution Done, Discarding {ExecutingCard.name}");
-        Assert.IsNotNull(ExecutingCard);
+        Assert.IsTrue(ExecutingCards.Count > 0);
+        Debug.Log($"Execution Done, Discarding {ExecutingCards.Peek().name}");
 
-        yield return new WaitForSeconds(Constants.StandardActionDelay);
-        yield return StartCoroutine(GetDisplay(ExecutingCard).FlashColor(Constants.ExecutionDoneColor));
+        yield return new WaitForSecondsRealtime(Constants.StandardActionDelay);
+        yield return StartCoroutine(GetDisplay(ExecutingCards.Peek()).FlashColor(Constants.ExecutionDoneColor));
 
-        Destroy(ExecutingCard);
-        ExecutingCard = null;
+        Destroy(ExecutingCards.Pop());
         yield break; // placeholder line
     }
 
     public void TargetCard(int index = 0)
     {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        GameObject removedCard = CardObjects[index];
-        GetMotor(removedCard).SetHover(true);
-        GetDisplay(removedCard).ShowSelectionHighlight();
+        AssertIndexInRange(index);
+        GameObject targetedCard = CardObjects[index];
+        GetMotor(targetedCard).SetHover(true);
+        GetDisplay(targetedCard).ShowSelectionHighlight();
     }
 
-    public void UnargetCard(int index = 0)
+    public void UntargetCard(int index = 0)
     {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        GameObject removedCard = CardObjects[index];
-        GetMotor(removedCard).SetHover(false);
-        GetDisplay(removedCard).ResetColor();
+        AssertIndexInRange(index);
+        GameObject targetedCard = CardObjects[index];
+        GetMotor(targetedCard).SetHover(false);
+        GetDisplay(targetedCard).ResetColor();
     }
 
     public IEnumerator DeleteCard(int index = 0)
     {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        AssertIndexInRange(index);
         GameObject removedCard = CardObjects[index];
 
         // TODO: add more animation in the future
-        yield return new WaitForSeconds(Constants.StandardActionDelay);
+        yield return new WaitForSecondsRealtime(Constants.StandardActionDelay);
         yield return GetDisplay(removedCard).FlashColor(Constants.DeletionEffectColor);
 
         CardObjects.RemoveAt(index);
@@ -116,30 +112,38 @@ public class StackDisplay : MonoBehaviour
         UpdateCardLocations();
     }
 
-    public IEnumerator TransformCard(CardInfo newInfo, int index = 0)
+    public IEnumerator TransformCard(Card newCard, int index = 0)
     {
-        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
+        AssertIndexInRange(index);
         GameObject transformedCard = CardObjects[index];
 
-        yield return new WaitForSeconds(Constants.StandardActionDelay);
+        yield return new WaitForSecondsRealtime(Constants.StandardActionDelay);
         yield return GetDisplay(transformedCard).FlashColor(Constants.FlashHighlight);
-        GetDisplay(transformedCard).UpdateTextDisplay(newInfo);
+        GetDisplay(transformedCard).UpdateDisplay(newCard);
         GetMotor(transformedCard).SetHover(false);
         GetDisplay(transformedCard).ResetColor();
     }
 
-    public void InsertCard(CardInfo info, int index = int.MaxValue)
+
+    public IEnumerator AddCard(Card card, int index)
+    {
+        CardDisplay cardDisplay = GetDisplay(InsertCardNoAnim(card, index));
+        yield return StartCoroutine(cardDisplay.FlashColor(Constants.AddEffectColor));
+    }
+
+    public GameObject InsertCardNoAnim(Card reference, int index = int.MaxValue)
     {
         if (index == int.MaxValue)
         {
             index = CardObjects.Count(); // default to inserting at the end
         }
         Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
-        GameObject card = Instantiate(CardPrefab, SpawnPoint.position, CardPrefab.transform.rotation);
+        Vector3 spawnPosition = index < CardPos.Count ? CardPos[index] : SpawnPoint.position;
+        GameObject card = Instantiate(CardPrefab, spawnPosition, CardPrefab.transform.rotation);
         card.tag = IsPlayer ? Constants.PlayerCardTag : Constants.EnemyCardTag;
         card.layer = IsPlayer ? LayerMask.NameToLayer(Constants.PlayerCardsLayerName)
                               : LayerMask.NameToLayer(Constants.EnemyCardsLayerName);
-        card.name = $"{card.tag} {info.Title} {info.UID}";
+        card.name = $"{card.tag} {reference.Title} {reference.UID}";
         CardController controller = card.GetComponent<CardController>();
         controller.ParentStack = this;
         controller.CardDrop.AddListener(UpdateCardLocations);
@@ -147,9 +151,10 @@ public class StackDisplay : MonoBehaviour
         controller.CardHeld.AddListener(HandleCardHeld);
         controller.CardDrop.AddListener(HandleCardDrop);
         controller.CardUnHover.AddListener(HandleCardUnHover);
-        controller.Info = info;
+        controller.CardReference = reference;
         CardObjects.Insert(index, card);
         UpdateCardLocations();
+        return card;
     }
 
     public void UpdateToOrder(List<int> newOrder)
@@ -268,22 +273,26 @@ public class StackDisplay : MonoBehaviour
         for (int i = 0; i < CardObjects.Count; i++)
         {
             GameObject card = CardObjects[i];
+            CardMotor motor = GetMotor(card);
+            CardController controller = GetController(card);
             if (i < viewSize)
             {
-                card.SetActive(true);
-                GetMotor(card).Move(CardPos[i]);
+                controller.InView = true;
+                motor.InView = true;
+                motor.Move(CardPos[i]);
+                motor.TurnFace(true);
             }
             else
             {
-                card.SetActive(false);
-                card.transform.position = SpawnPoint.position;
+                controller.InView = false;
+                motor.InView = false;
+                motor.Move(new Vector3(SpawnPoint.position.x,
+                                        SpawnPoint.position.y + (CardObjects.Count - i - 1) * Constants.CardHeight,
+                                        SpawnPoint.position.z));
+                motor.TurnFace(false);
             }
         }
-        DisplayText.text = $"{Name}\nCards Left: {CardObjects.Count}";
-        if (CardObjects.Count == 0)
-        {
-            DisplayText.text = $"{Name} Lost\nNo Cards Left In Deck";
-        }
+        DisplayText.text = $"Cards Left: {CardObjects.Count}";
     }
 
     CardController GetController(GameObject card)
@@ -308,5 +317,10 @@ public class StackDisplay : MonoBehaviour
         CardDisplay display = card.GetComponent<CardDisplay>();
         Assert.IsNotNull(display);
         return display;
+    }
+
+    void AssertIndexInRange(int index)
+    {
+        Assert.IsTrue(index >= 0 && index <= CardObjects.Count);
     }
 }

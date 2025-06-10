@@ -12,13 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0fd0f407cd374746bb5f7f327ae3c60, type: 3}
   m_Name: Basic Attack
   m_EditorClassIdentifier: 
-  Info:
-    Title: Basic Attack
-    Description: Delete 2 cards from the top of the opponent's stack
-    EnergyCost: 1
-    Rarity: 1
-    Swappable: 1
-    UID: 0
+  Title: Basic Attack
+  OverrideGeneratedDescription: 0
+  OverrideEffectDescription: 
+  EnergyCost: 1
+  Rarity: 0
+  Properties: 
   Effects:
   - Type: 2
     Target: 2

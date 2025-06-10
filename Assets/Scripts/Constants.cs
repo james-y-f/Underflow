@@ -9,22 +9,40 @@ public static class Constants
     public const string PlayerStackTag = "PlayerStack";
     public const string EnemyStackTag = "EnemyStack";
 
+    public const string ExecuteNextButtonTag = "ExecuteNextButton";
+
+    public const string EndTurnButtonTag = "EndTurnButton";
+
+    public const string ExecuteAllButtonTag = "ExecuteAllButton";
     // layers
     public const string PlayerCardsLayerName = "PlayerCards";
     public const string EnemyCardsLayerName = "EnemyCards";
 
     // Card Movement    
-    public const float PosTolerance = 0.05f;
+    public const float PosTolerance = 0.02f;
     public const float DefaultCardMoveSpeedFactor = 5;
     public const float BaseHeight = 0.1f;
     public const float HoverHeight = 0.2f;
+    public const float CardHeight = 0.1f;
+
+    public static Quaternion FaceUp
+    {
+        get { return Quaternion.Euler(0, 0, 0); }
+        private set { }
+    }
+
+    public static Quaternion FaceDown
+    {
+        get { return Quaternion.Euler(0, 0, 180); }
+        private set { }
+    }
 
     // Colors
     // TODO: finalize colors
     public const float DefaultColorFadeSpeed = 0.05f;
     public const float DefaultColorFlashSpeed = 0.1f;
     public const float ColorTolerance = 0.02f;
-    public const float TransparencyFactor = 0.25f;
+    public const float DimFactor = 0f;
     public static Color PlayerCardColor
     {
         get { return new Color(0.1f, 0.1f, 0.3f, 1f); }
@@ -36,9 +54,9 @@ public static class Constants
         private set { }
     }
 
-    public static Color EnergyStoneColor
+    public static Color UnswappableColor
     {
-        get { return new Color(0.032395f, 0.981132f, 0.06513549f, 1f); }
+        get { return new Color(0.15f, 0.15f, 0.15f, 1f); }
         private set { }
     }
 

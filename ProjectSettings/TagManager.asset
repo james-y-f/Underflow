@@ -8,6 +8,9 @@ TagManager:
   - EnemyCard
   - PlayerStack
   - EnemyStack
+  - ExecuteNextButton
+  - EndTurnButton
+  - ExecuteAllButton
   layers:
   - Default
   - TransparentFX

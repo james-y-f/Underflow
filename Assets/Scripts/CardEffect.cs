@@ -11,7 +11,7 @@ public enum EffectType
     ModEnergy,
     ModEnergyNextTurn,
     Transform,
-    Exile,
+    MakeUnswappable,
 }
 
 public enum EffectTarget
@@ -58,7 +58,10 @@ public enum DeckEntity
     EnemyDiscard
 }
 
-
+public enum Property
+{
+    Unswappable
+}
 
 [System.Serializable]
 public struct VariableValue
@@ -99,6 +102,7 @@ public struct CardEffect
     public override string ToString()
     {
         StringBuilder effectString = new StringBuilder();
+        // TODO: somehow test if Values[0] exists
         switch (Type)
         {
             case EffectType.Undefined:
@@ -107,36 +111,8 @@ public struct CardEffect
             case EffectType.NoEffect:
                 return "Does Nothing";
             case EffectType.Delete:
-                effectString.Append($"Delete {Values[0]} cards ");
-                switch (Mode)
-                {
-                    case EffectMode.Top:
-                        effectString.Append("from the top of ");
-                        break;
-                    case EffectMode.RandomFromDeck:
-                        effectString.Append("randomly from ");
-                        break;
-                    case EffectMode.Bottom:
-                        effectString.Append("from the bottom of ");
-                        break;
-                    default:
-                        Debug.LogError("undefined mode for delete");
-                        Assert.IsTrue(false);
-                        break;
-                }
-                switch (Target)
-                {
-                    case EffectTarget.Opponent:
-                        effectString.Append("the opponent's stack");
-                        break;
-                    case EffectTarget.Self:
-                        effectString.Append("the owner's stack");
-                        break;
-                    default:
-                        Debug.LogError("undefined target for delete");
-                        Assert.IsTrue(false);
-                        break;
-                }
+                effectString.Append($"Delete {PluralHelper(Values[0].Constant, "card")} ");
+                effectString.Append(ModeTargetHelper("from"));
                 return effectString.ToString();
 
             case EffectType.ModEnergy:
@@ -177,10 +153,77 @@ public struct CardEffect
                 }
                 return $"{action} {Values[0]} energy next turn";
 
+            case EffectType.Transform:
+                Assert.IsNotNull(ReferenceCardTemplate);
+                effectString.Append($"Transform {PluralHelper(Values[0].Constant, "card")} ");
+                effectString.Append(ModeTargetHelper("from"));
+                effectString.Append($" to {ReferenceCardTemplate.Title}");
+                return effectString.ToString();
+
+            case EffectType.Add:
+                Assert.IsNotNull(ReferenceCardTemplate);
+                effectString.Append($"Add {PluralHelper(Values[0].Constant, "copy", "copies")} of ");
+                effectString.Append($"{ReferenceCardTemplate.Title} ");
+                effectString.Append(ModeTargetHelper("to"));
+                return effectString.ToString();
+
+            case EffectType.MakeUnswappable:
+                effectString.Append($"Make {PluralHelper(Values[0].Constant, "card")} ");
+                effectString.Append(ModeTargetHelper("from"));
+                effectString.Append(" Unswappable");
+                return effectString.ToString();
 
             default:
                 Debug.LogError("Card Effect ToString case not yet implemented");
                 return "undefined description";
         }
+    }
+
+    string ModeTargetHelper(string prep)
+    {
+        StringBuilder effectString = new StringBuilder();
+        switch (Mode)
+        {
+            case EffectMode.Top:
+                effectString.Append($"{prep} top of ");
+                break;
+            case EffectMode.RandomFromView:
+                effectString.Append($"randomly {prep} visible portion of ");
+                break;
+            case EffectMode.RandomFromDeck:
+                effectString.Append($"randomly {prep} ");
+                break;
+            case EffectMode.Bottom:
+                effectString.Append($"{prep} bottom of ");
+                break;
+            default:
+                Debug.LogError("undefined mode for helper");
+                Assert.IsTrue(false);
+                break;
+        }
+        switch (Target)
+        {
+            case EffectTarget.Opponent:
+                effectString.Append("opponent's stack");
+                break;
+            case EffectTarget.Self:
+                effectString.Append("owner's stack");
+                break;
+            default:
+                Debug.LogError("undefined target for helper");
+                Assert.IsTrue(false);
+                break;
+        }
+        return effectString.ToString();
+    }
+
+    string PluralHelper(int amount, string single, string plural = "")
+    {
+        if (plural == "")
+        {
+            plural = $"{single}s";
+        }
+        Assert.IsTrue(amount > 0);
+        return amount > 1 ? $"{amount} {plural}" : $"{amount} {single}";
     }
 }

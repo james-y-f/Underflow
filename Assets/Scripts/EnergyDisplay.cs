@@ -77,7 +77,7 @@ public class EnergyDisplay : MonoBehaviour
             GameObject newStone = Instantiate(EnergyStonePrefab,
                 SpawnPoint.position + (Stones.Count + TransparentStones.Count) * Constants.EnergySpawnDisplacement,
                 SpawnPoint.rotation);
-            GetStoneComponent(newStone).SetTransparent(true);
+            GetStoneComponent(newStone).SetDimmed(true);
             TransparentStones.Add(newStone);
             yield return StartCoroutine(GetStoneComponent(newStone).FlashColor(Constants.FlashHighlight));
         }
