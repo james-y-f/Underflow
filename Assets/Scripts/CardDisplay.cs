@@ -15,9 +15,18 @@ public class CardDisplay : ColorController
         Description = tf.Find("Description").GetComponent<TMP_Text>();
     }
 
-    protected override void Start()
+    public void UpdateDisplay(Card reference)
     {
-        if (gameObject.tag == Constants.PlayerCardTag)
+        Title.text = reference.Title;
+        Energy.text = reference.EnergyCost.ToString();
+        Description.text = reference.Description;
+        gameObject.name = $"{gameObject.tag} {reference.Title} {reference.UID}";
+        if (!reference.Swappable)
+        {
+            DefaultColor = Constants.UnswappableColor;
+            ResetColor();
+        }
+        else if (gameObject.tag == Constants.PlayerCardTag)
         {
             DefaultColor = Constants.PlayerCardColor;
         }
@@ -31,12 +40,5 @@ public class CardDisplay : ColorController
             DefaultColor = Color.grey;
         }
         ResetColor();
-    }
-
-    public void UpdateTextDisplay(CardInfo info)
-    {
-        Title.text = info.Title;
-        Energy.text = info.EnergyCost.ToString();
-        Description.text = info.Description;
     }
 }

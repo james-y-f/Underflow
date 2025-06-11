@@ -26,7 +26,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4617936075798751866}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.379}
+  m_LocalPosition: {x: 0, y: 0, z: 0.369}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -202,7 +202,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4629895814737953337}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.379}
+  m_LocalPosition: {x: 0, y: 0, z: 0.358}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -465,8 +465,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 3.6125395, z: 1}
+  m_Center: {x: 0, y: -1.3062699, z: 0}
 --- !u!114 &5087094013951195976
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -492,7 +492,16 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   ParentStack: {fileID: 0}
-  Swappable: 1
+  Info:
+    Title: 
+    OverrideGeneratedDescription: 0
+    Description: 
+    EnergyCost: 0
+    Rarity: 0
+    Swappable: 0
+    UID: 0
+  CardSwappable: 1
+  InView: 0
 --- !u!114 &4486691972463311031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -517,7 +526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 072c0d811bc8b4c6289fe24890ed8d25, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveSpeedFactor: 5
+  InView: 0
 --- !u!54 &-8721193137735434717
 Rigidbody:
   m_ObjectHideFlags: 0

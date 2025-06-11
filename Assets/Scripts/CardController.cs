@@ -8,11 +8,11 @@ public class CardController : MonoBehaviour
     public UnityEvent CardDrop;
     public UnityEvent CardUnHover;
     public StackDisplay ParentStack;
-    public CardInfo Info;
-    public bool CardSwappable = true;
+    public Card CardReference;
+    public bool InView = false;
     public bool Swappable
     {
-        get { return ParentStack.DeckSwappable && CardSwappable; }
+        get { return ParentStack.DeckSwappable && CardReference.Swappable; }
         private set { }
     }
     Vector3 MouseOffset;
@@ -32,7 +32,7 @@ public class CardController : MonoBehaviour
 
     void Start()
     {
-        Display.UpdateTextDisplay(Info);
+        Display.UpdateDisplay(CardReference);
     }
 
     private Vector3 CalcScreenPos()
@@ -40,8 +40,9 @@ public class CardController : MonoBehaviour
         return Camera.main.WorldToScreenPoint(transform.position);
     }
 
-    void OnMouseEnter()
+    void OnMouseOver()
     {
+        if (!InView) return;
         // TODO: display tooltip 
         Display.ShowSelectionHighlight();
         if (!Swappable || Held || !ParentStack.CardHoverable()) return;
@@ -53,6 +54,7 @@ public class CardController : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (!InView) return;
         if (!Swappable || !ParentStack.CardHoldable()) return;
         Held = true;
         MouseOffset = Input.mousePosition - CalcScreenPos();
@@ -61,6 +63,7 @@ public class CardController : MonoBehaviour
 
     void OnMouseDrag()
     {
+        if (!InView) return;
         if (!Swappable || !Held) return;
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition - MouseOffset);
         Motor.DragTo(mousePos.x);
@@ -68,6 +71,7 @@ public class CardController : MonoBehaviour
 
     void OnMouseUp()
     {
+        if (!InView) return;
         if (!Swappable || !Held) return;
         Held = false;
         Motor.SetHover(false);
@@ -76,6 +80,7 @@ public class CardController : MonoBehaviour
 
     void OnMouseExit()
     {
+        if (!InView) return;
         // cancel tooltip 
         Display.ResetColor();
         if (!Swappable || Held || !Hovering) return;
@@ -84,5 +89,4 @@ public class CardController : MonoBehaviour
         CardUnHover.Invoke();
         Motor.SetHover(false);
     }
-
 }

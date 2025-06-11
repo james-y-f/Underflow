@@ -7,20 +7,23 @@ public class ColorController : MonoBehaviour
     Renderer Render;
     protected Color DefaultColor
     {
-        get { return defaultColor; }
+        get { return Dimmed ? dimmedColor : defaultColor; }
         set
         {
             defaultColorSet = true;
             defaultColor = value;
+            dimmedColor = Color.gray; // FIXME:
         }
     }
+    private bool Dimmed = false;
     private Color defaultColor;
+    private Color dimmedColor;
     private bool defaultColorSet = false;
 
     protected virtual void Awake()
     {
         Render = GetComponent<Renderer>();
-        DefaultColor = Color.grey;
+        DefaultColor = Render.material.color;
     }
 
     protected virtual void Start()
@@ -64,16 +67,9 @@ public class ColorController : MonoBehaviour
         Render.material.color = color;
     }
 
-    public void SetTransparent(bool transparent)
+    public void SetDimmed(bool dimmed)
     {
-        if (transparent)
-        {
-            DefaultColor *= Constants.TransparencyFactor;
-        }
-        else
-        {
-            DefaultColor /= Constants.TransparencyFactor;
-        }
+        Dimmed = dimmed;
         ResetColor();
     }
 

@@ -10,27 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0fd0f407cd374746bb5f7f327ae3c60, type: 3}
-  m_Name: Overclock
+  m_Name: NOP Packet
   m_EditorClassIdentifier: 
-  Title: Overclock
+  Title: NOP Packet
   OverrideGeneratedDescription: 0
   OverrideEffectDescription: 
   EnergyCost: 1
   Rarity: 0
   Properties: 
   Effects:
-  - Type: 2
-    Target: 3
+  - Type: 6
+    Target: 2
     Mode: 1
     Values:
     - Type: 1
       Constant: 1
-    ReferenceCardTemplate: {fileID: 0}
-  - Type: 4
-    Target: 3
-    Mode: 0
-    Values:
-    - Type: 1
-      Constant: 2
-    ReferenceCardTemplate: {fileID: 0}
+    ReferenceCardTemplate: {fileID: 11400000, guid: de6b8f33f6c8e46c8abf401b5ae03b35, type: 2}
   OnDeleteEffects: []

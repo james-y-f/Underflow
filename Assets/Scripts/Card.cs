@@ -1,33 +1,49 @@
 using System.Collections.Generic;
 
 [System.Serializable]
-// this is so that we can get a mutable card object
 public class Card
 {
     public static int UID_COUNTER { get; private set; }
     public CardTemplate Template { get; private set; }
-    public CardInfo Info;
+    public string Title;
+    public string Description
+    {
+        get { return $"{(PropertyDescription == "" ? "" : $"{PropertyDescription}")}{EffectDescription}"; }
+        private set { }
+    }
+    string PropertyDescription;
+    string EffectDescription;
+    public int EnergyCost;
+    public RarityLevel Rarity;
+    public int UID;
+    public bool Swappable
+    {
+        get { return Properties == null || Properties.Count == 0 || !Properties.Contains(Property.Unswappable); }
+        private set { }
+    }
+    public List<Property> Properties;
     public List<CardEffect> Effects;
     public List<CardEffect> OnDeleteEffects;
 
     public Card(CardTemplate template)
     {
-        Info = new CardInfo();
         SetTemplate(template);
-        Info.UID = GetNewUID();
+        UID = GetNewUID();
     }
-
     public void SetTemplate(CardTemplate template)
     {
         Template = template;
+        Title = template.Title;
+        EnergyCost = template.EnergyCost;
+        Rarity = template.Rarity;
 
-        // prevent uid from being overwritten by template change
-        int uid = Info.UID;
-        Info = template.Info;
-        Info.UID = uid;
-
+        Properties = new List<Property>();
         Effects = new List<CardEffect>();
         OnDeleteEffects = new List<CardEffect>();
+        foreach (Property property in template.Properties)
+        {
+            Properties.Add(property);
+        }
         foreach (CardEffect effect in template.Effects)
         {
             Effects.Add(effect);
@@ -36,6 +52,16 @@ public class Card
         {
             OnDeleteEffects.Add(effect);
         }
+        PropertyDescription = Util.GeneratePropertyDesc(Properties);
+        EffectDescription = template.OverrideGeneratedDescription ?
+                            template.OverrideEffectDescription : Util.GenerateEffectDesc(Effects, OnDeleteEffects);
+    }
+
+    public void AddProperty(Property property)
+    {
+        if (Properties.Contains(property)) return;
+        Properties.Add(property);
+        PropertyDescription = Util.GeneratePropertyDesc(Properties);
     }
 
     public static void ResetUIDCounter()
