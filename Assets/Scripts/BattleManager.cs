@@ -457,7 +457,7 @@ public class BattleManager : MonoBehaviour
 
     void HandleWinCommand()
     {
-        GameOver("YOU WON BY CHEATING!", "COMMAND SUCCESSFUL");
+        GameOver("YOU WON BY CHEATING!", "CHEAT SUCCESSFUL");
     }
 
     void ToggleConsole(InputAction.CallbackContext context)
