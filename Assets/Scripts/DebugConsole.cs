@@ -10,12 +10,13 @@ public class DebugConsole : MonoBehaviour
 {
     public static DebugConsole Instance;
     public UnityEvent<bool, int, int> SwapCommand;
+    public UnityEvent WinCommand;
     [SerializeField] TMP_InputField Input;
     [SerializeField] TextMeshProUGUI DisplayText;
     [SerializeField] ScrollRect Scroll;
     BattleManager Battle;
     StringBuilder DisplayLog;
-    const string VALID_COMMANDS = "swap [target] [number] [number], debug";
+    const string VALID_COMMANDS = "swap [target] [number] [number], debug, win";
     void Awake()
     {
         // singleton object
@@ -133,6 +134,12 @@ public class DebugConsole : MonoBehaviour
             case "debug":
             case "d":
                 Log(Battle.PrintDebugStatus());
+                break;
+
+            case "win":
+            case "w":
+                Log("Used Win Command");
+                WinCommand.Invoke();
                 break;
 
             default:

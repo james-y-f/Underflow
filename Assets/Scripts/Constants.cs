@@ -83,6 +83,12 @@ public static class Constants
         private set { }
     }
 
+    public static Vector3 BaseEnergySpawnHeightAdjustment
+    {
+        get { return new Vector3(0f, 0.1f, 0f); }
+        private set { }
+    }
+
     // Animation
     public const float StandardActionDelay = 0.5f;
     public const float FastActionDelay = 0.25f;

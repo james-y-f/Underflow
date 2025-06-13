@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,140 +6,196 @@ using UnityEngine.Assertions;
 
 public class EnergyDisplay : MonoBehaviour
 {
-    [SerializeField] GameObject EnergyStonePrefab;
+    [SerializeField] GameObject BaseEnergyStonePrefab;
+    [SerializeField] GameObject TempEnergyStonePrefab;
     Transform SpawnPoint;
-    List<GameObject> Stones;
-    List<GameObject> TransparentStones;
+    List<GameObject> BaseStones;
+    public int TotalBaseEnergy = 0;
+    int ActiveBaseEnergy = 0;
+    List<GameObject> TempStones;
+    List<GameObject> DimmedTempStones;
 
     void Awake()
     {
         SpawnPoint = transform;
-        Stones = new List<GameObject>();
-        TransparentStones = new List<GameObject>();
+        BaseStones = new List<GameObject>();
+        TempStones = new List<GameObject>();
+        DimmedTempStones = new List<GameObject>();
     }
 
-    IEnumerator AddEnergy(int amount)
+    public void SpawnBaseEnergy(int amount)
+    {
+        TotalBaseEnergy = amount;
+        Assert.IsTrue(TotalBaseEnergy > 0);
+        Debug.Log($"Spawning {TotalBaseEnergy} Base Energy");
+        for (int i = 0; i < TotalBaseEnergy; i++)
+        {
+            GameObject newStone = Instantiate(BaseEnergyStonePrefab,
+                SpawnPoint.position + Constants.BaseEnergySpawnHeightAdjustment + BaseStones.Count * Constants.EnergySpawnDisplacement,
+                SpawnPoint.rotation);
+            GetColorController(newStone).SetDimmed(true);
+            BaseStones.Add(newStone);
+        }
+    }
+
+    IEnumerator GainBaseEnergy(int amount = int.MaxValue)
     {
         if (amount < 1) yield break;
-        Debug.Log($"Adding {amount} Energy");
+        if (amount == int.MaxValue)
+        {
+            amount = TotalBaseEnergy;
+        }
+        Debug.Log($"Activating {amount} Base Energy");
+        for (int i = 0; i < Math.Min(amount, TotalBaseEnergy - ActiveBaseEnergy); i++)
+        {
+            int gainIndex = ActiveBaseEnergy + i;
+            GetColorController(BaseStones[gainIndex]).SetDimmed(false);
+            yield return StartCoroutine(GetColorController(BaseStones[gainIndex]).FlashColor(Constants.FlashHighlight));
+        }
+        ActiveBaseEnergy = Math.Min(TotalBaseEnergy, ActiveBaseEnergy + amount);
+    }
 
+    IEnumerator SpendBaseEnergy(int amount)
+    {
+        if (amount < 1) yield break;
+        Debug.Log($"Spending {amount} Base Energy");
+        for (int i = 0; i < Math.Min(amount, ActiveBaseEnergy); i++)
+        {
+            int spendIndex = ActiveBaseEnergy - i - 1;
+            GetColorController(BaseStones[spendIndex]).SetDimmed(true);
+            yield return StartCoroutine(GetColorController(BaseStones[spendIndex]).FlashColor(Constants.FlashHighlight));
+        }
+        ActiveBaseEnergy = Math.Max(0, ActiveBaseEnergy - amount);
+    }
+
+    IEnumerator AddTempEnergy(int amount)
+    {
+        if (amount < 1) yield break;
+        Debug.Log($"Adding {amount} Temp Energy");
         for (int i = 0; i < amount; i++)
         {
-            foreach (GameObject stone in TransparentStones)
+            foreach (GameObject stone in DimmedTempStones)
             {
                 stone.transform.position += Constants.EnergySpawnDisplacement;
             }
-            GameObject newStone = Instantiate(EnergyStonePrefab,
-                SpawnPoint.position + Stones.Count * Constants.EnergySpawnDisplacement,
+            GameObject newStone = Instantiate(TempEnergyStonePrefab,
+                SpawnPoint.position + (BaseStones.Count + TempStones.Count) * Constants.EnergySpawnDisplacement,
                 SpawnPoint.rotation);
-            Stones.Add(newStone);
-            yield return StartCoroutine(GetStoneComponent(newStone).FlashColor(Constants.FlashHighlight));
+            TempStones.Add(newStone);
+            yield return StartCoroutine(GetColorController(newStone).FlashColor(Constants.FlashHighlight));
         }
     }
 
-    IEnumerator RemoveEnergy(int amount)
+    IEnumerator RemoveTempEnergy(int amount)
     {
         if (amount < 1) yield break;
-        Debug.Log($"Removing {amount} Energy");
+        Debug.Log($"Removing {amount} Temp Energy");
         for (int i = 0; i < amount; i++)
         {
-            foreach (GameObject stone in TransparentStones)
+            foreach (GameObject stone in DimmedTempStones)
             {
                 stone.transform.position -= Constants.EnergySpawnDisplacement;
             }
-            GameObject removedStone = Stones[Stones.Count - 1];
-            yield return StartCoroutine(GetStoneComponent(removedStone).FlashColor(Constants.FlashHighlight));
-            Stones.RemoveAt(Stones.Count - 1);
+            GameObject removedStone = TempStones[TempStones.Count - 1];
+            yield return StartCoroutine(GetColorController(removedStone).FlashColor(Constants.FlashHighlight));
+            TempStones.Remove(removedStone);
             Destroy(removedStone);
         }
     }
 
-    public IEnumerator SetEnergy(int target)
+    public IEnumerator SetActiveEnergy(int target)
     {
         Assert.IsTrue(target >= 0);
+        int currentEnergy = ActiveBaseEnergy + TempStones.Count;
+        if (currentEnergy == target) yield break;
         Debug.Log($"Setting Energy To {target}");
-        if (Stones.Count == target) yield break;
-        if (Stones.Count < target)
+        int difference = Math.Abs(target - currentEnergy);
+        if (currentEnergy < target)
         {
-            yield return StartCoroutine(AddEnergy(target - Stones.Count));
+            int baseGainAmount = Math.Min(difference, TotalBaseEnergy - ActiveBaseEnergy);
+            int tempGainAmount = difference - baseGainAmount;
+            yield return StartCoroutine(GainBaseEnergy(baseGainAmount));
+            yield return StartCoroutine(AddTempEnergy(tempGainAmount));
         }
         else
         {
-            yield return StartCoroutine(RemoveEnergy(Stones.Count - target));
+            int tempLoseAmount = Math.Min(difference, TempStones.Count);
+            int baseLoseAmount = difference - tempLoseAmount;
+            yield return StartCoroutine(RemoveTempEnergy(tempLoseAmount));
+            yield return StartCoroutine(SpendBaseEnergy(baseLoseAmount));
         }
     }
 
-    IEnumerator AddTransparentEnergy(int amount)
+    IEnumerator AddDimmedTempEnergy(int amount)
     {
         if (amount < 1) yield break;
-        Debug.Log($"Adding {amount} Transparent Energy");
+        Debug.Log($"Adding {amount} Dimmed Energy");
         for (int i = 0; i < amount; i++)
         {
-            GameObject newStone = Instantiate(EnergyStonePrefab,
-                SpawnPoint.position + (Stones.Count + TransparentStones.Count) * Constants.EnergySpawnDisplacement,
+            GameObject newStone = Instantiate(TempEnergyStonePrefab,
+                SpawnPoint.position + (BaseStones.Count + TempStones.Count + DimmedTempStones.Count) * Constants.EnergySpawnDisplacement,
                 SpawnPoint.rotation);
-            GetStoneComponent(newStone).SetDimmed(true);
-            TransparentStones.Add(newStone);
-            yield return StartCoroutine(GetStoneComponent(newStone).FlashColor(Constants.FlashHighlight));
+            DimmedTempStones.Add(newStone);
+            GetColorController(newStone).SetDimmed(true);
+            yield return StartCoroutine(GetColorController(newStone).FlashColor(Constants.FlashHighlight));
         }
     }
 
-    IEnumerator RemoveTransparentEnergy(int amount)
+    IEnumerator RemoveDimmedTempEnergy(int amount)
     {
         if (amount < 1) yield break;
-        Debug.Log($"Removing {amount} Transparent Energy");
+        Debug.Log($"Removing {amount} Dimmed Energy");
         for (int i = 0; i < amount; i++)
         {
-            GameObject removedStone = TransparentStones[TransparentStones.Count - 1];
-            yield return StartCoroutine(GetStoneComponent(removedStone).FlashColor(Constants.FlashHighlight));
-            TransparentStones.RemoveAt(Stones.Count - 1);
+            GameObject removedStone = DimmedTempStones[DimmedTempStones.Count - 1];
+            yield return StartCoroutine(GetColorController(removedStone).FlashColor(Constants.FlashHighlight));
+            DimmedTempStones.Remove(removedStone);
             Destroy(removedStone);
         }
     }
 
-    public IEnumerator SetTransparentEnergy(int target)
+    public IEnumerator SetDimmedTempEnergy(int target)
     {
         Assert.IsTrue(target >= 0);
-        Debug.Log($"Setting Transparent Energy To {target}");
-        if (Stones.Count == target) yield break;
-        if (Stones.Count < target)
+        if (DimmedTempStones.Count == target) yield break;
+        Debug.Log($"Setting Dimmed Energy To {target}");
+        if (DimmedTempStones.Count < target)
         {
-            yield return StartCoroutine(AddTransparentEnergy(target - TransparentStones.Count));
+            yield return StartCoroutine(AddDimmedTempEnergy(target - DimmedTempStones.Count));
         }
         else
         {
-            yield return StartCoroutine(RemoveTransparentEnergy(TransparentStones.Count - target));
+            yield return StartCoroutine(RemoveDimmedTempEnergy(DimmedTempStones.Count - target));
         }
     }
 
-    public void RemoveAllEnergy()
+    public IEnumerator RemoveUnusedEnergy()
     {
-        Debug.Log($"Removing All  Energy");
-        foreach (GameObject stone in TransparentStones)
-        {
-            stone.transform.position -= Constants.EnergySpawnDisplacement * Stones.Count;
-        }
-        foreach (GameObject stone in Stones)
-        {
-            Destroy(stone);
-        }
-        Stones.Clear();
+        yield return RemoveTempEnergy(TempStones.Count);
+        yield return SpendBaseEnergy(ActiveBaseEnergy);
     }
 
-    public void RemoveAllTransparentEnergy()
+    public IEnumerator StartTurnCoroutine(int target)
     {
-        Debug.Log($"Removing All Transparent Energy");
-        foreach (GameObject stone in TransparentStones)
+        Assert.IsTrue(TotalBaseEnergy + DimmedTempStones.Count == target);
+        yield return StartCoroutine(GainBaseEnergy(TotalBaseEnergy));
+        foreach (GameObject dimmedStone in DimmedTempStones)
         {
-            Destroy(stone);
+            TempStones.Add(dimmedStone);
         }
-        TransparentStones.Clear();
+        DimmedTempStones = new List<GameObject>();
+        Assert.IsTrue(DimmedTempStones.Count == 0);
+        foreach (GameObject stone in TempStones)
+        {
+            GetColorController(stone).SetDimmed(false);
+            yield return StartCoroutine(GetColorController(stone).FlashColor(Constants.FlashHighlight));
+        }
     }
 
-    EnergyStone GetStoneComponent(GameObject stoneObject)
+    ColorController GetColorController(GameObject stoneObject)
     {
-        EnergyStone stone = stoneObject.GetComponent<EnergyStone>();
-        Assert.IsNotNull(stone);
-        return stone;
+        ColorController controller = stoneObject.GetComponent<ColorController>();
+        Assert.IsNotNull(controller);
+        return controller;
     }
 }

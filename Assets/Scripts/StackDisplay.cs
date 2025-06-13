@@ -28,7 +28,7 @@ public class StackDisplay : MonoBehaviour
         }
     }
     public bool DeckSwappable = true;
-    public EnergyDisplay EnergyDisplay;
+    public EnergyDisplay EnergyDisplayReference;
     [SerializeField] GameObject CardPrefab;
     [SerializeField] bool IsPlayer;
     Transform SpawnPoint;
@@ -50,7 +50,7 @@ public class StackDisplay : MonoBehaviour
         LeftPos = transform.Find("LeftmostCardPos");
         RightPos = transform.Find("RightmostCardPos");
         ExecutionPos = transform.Find("ExecutionPos");
-        EnergyDisplay = transform.Find("EnergyDisplay").GetComponent<EnergyDisplay>();
+        EnergyDisplayReference = transform.Find("EnergyDisplay").GetComponent<EnergyDisplay>();
         DisplayText = transform.Find("Display").transform.Find("DisplayText").GetComponent<TMP_Text>();
         CardObjects = new List<GameObject>();
         ExecutingCards = new Stack<GameObject>();

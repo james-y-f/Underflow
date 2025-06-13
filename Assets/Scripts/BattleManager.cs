@@ -70,9 +70,8 @@ public class BattleManager : MonoBehaviour
 
         Player = new Entity(PlayerBaseStats, true, playerStackDisplay);
         Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
+
         InputActions = new PlayerInputActions();
-
-
     }
     void OnEnable()
     {
@@ -90,6 +89,7 @@ public class BattleManager : MonoBehaviour
     {
         ConsoleInstance = DebugConsole.Instance;
         ConsoleInstance.SwapCommand.AddListener(HandleSwapCommand);
+        ConsoleInstance.WinCommand.AddListener(HandleWinCommand);
         ConsoleInstance.gameObject.SetActive(ConsoleActiveAtStart);
 
         Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
@@ -112,6 +112,9 @@ public class BattleManager : MonoBehaviour
 
         LoadDisplays();
 
+        Player.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Player.BaseEnergy);
+        Enemy.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Enemy.BaseEnergy);
+
         StartCoroutine(StartPlayerTurn());
     }
 
@@ -125,12 +128,7 @@ public class BattleManager : MonoBehaviour
         EndTurnButton.SetInteractible(false); // player must execute at least one card per turn
 
         Player.ResetEnergy();
-
-        Player.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
-        yield return StartCoroutine(Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy));
-
-        Enemy.StackDisplay.EnergyDisplay.RemoveAllEnergy();
-        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplayReference.StartTurnCoroutine(Player.CurrentEnergy));
 
         CurrentState = BattleState.PlayerTurn;
     }
@@ -153,6 +151,12 @@ public class BattleManager : MonoBehaviour
     {
         if (CurrentState != BattleState.PlayerTurn && CurrentState != BattleState.PlayerExecution) return;
         SetAllButtonsInteractible(false);
+        StartCoroutine(PlayerEndTurnCoroutine());
+    }
+
+    IEnumerator PlayerEndTurnCoroutine()
+    {
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplayReference.RemoveUnusedEnergy());
         StartCoroutine(EnemyTurn());
     }
 
@@ -178,9 +182,10 @@ public class BattleManager : MonoBehaviour
         CurrentState = BattleState.EnemyTurn;
 
         Enemy.ResetEnergy();
-        Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
-        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy));
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplayReference.StartTurnCoroutine(Enemy.CurrentEnergy));
+
         yield return StartCoroutine(ExecuteAllCoroutine(Enemy));
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplayReference.RemoveUnusedEnergy());
         if (GameIsOver) yield break;
 
         // Transition back to Player Turn
@@ -247,7 +252,7 @@ public class BattleManager : MonoBehaviour
         if (!executingAll && !CheckNextCardExecutable(source)) yield break;
         Card nextCard = source.Stack[0];
         source.CurrentEnergy -= nextCard.EnergyCost;
-        yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
+        yield return StartCoroutine(source.StackDisplay.EnergyDisplayReference.SetActiveEnergy(source.CurrentEnergy));
 
         source.Stack.RemoveAt(0);
         ConsoleInstance.Log($"Executing: {nextCard.Title}");
@@ -320,13 +325,13 @@ public class BattleManager : MonoBehaviour
 
             case EffectType.ModEnergy:
                 target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
-                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplayReference.SetActiveEnergy(target.CurrentEnergy));
                 break;
 
             case EffectType.ModEnergyNextTurn:
                 int addAmount = ResolveValue(source, effect.Values[0]);
                 target.CarryOverEnergy += addAmount;
-                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetTransparentEnergy(target.CarryOverEnergy));
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplayReference.SetDimmedTempEnergy(target.CarryOverEnergy));
                 break;
 
             case EffectType.MakeUnswappable:
@@ -410,9 +415,19 @@ public class BattleManager : MonoBehaviour
         if (amount < 1) yield break;
         Assert.IsNotNull(target);
         ConsoleInstance.Log($"Adding {amount} {template.Title} to {target.Name}");
-        for (int i = 0; i < amount; i++)
+        for (int i = 0; i < amount; i++) // have to add card one at a time because adding changes state significantly
         {
-            int addIdx = target.Stack.ResolveIndex(mode, 1, target.ViewSize)[0];
+            List<int> addIndices = target.Stack.ResolveIndex(mode, 1, target.ViewSize);
+            int addIdx;
+            if (addIndices.Count == 0)
+            {
+                addIdx = 0; // because you can still add to an empty list (and you always add to the top)
+
+            }
+            else
+            {
+                addIdx = addIndices[0];
+            }
             Card newCard = new Card(template);
             target.Stack.Insert(addIdx, newCard);
             ConsoleInstance.Log($"added {newCard.Title} to {addIdx}");
@@ -435,6 +450,12 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"handling swap command, {currentIndex}, {targetIndex}");
         SwapStack(targetEntity, currentIndex, targetIndex, false, true);
     }
+
+    void HandleWinCommand()
+    {
+        GameOver("YOU WON BY CHEATING!");
+    }
+
     void ToggleConsole(InputAction.CallbackContext context)
     {
         Debug.Log($"Toggling Console to {!ConsoleInstance.gameObject.activeSelf}");

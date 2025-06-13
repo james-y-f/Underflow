@@ -376,7 +376,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be08493c377474cd4bb633bf846aaa79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  EnergyStonePrefab: {fileID: 1436666365584530208, guid: 07e84c8f9e5ad4b1caa2ad3e945225f6, type: 3}
+  BaseEnergyStonePrefab: {fileID: 1436666365584530208, guid: 2072f7a95e9db46a3bcad79eefe473b7, type: 3}
+  TempEnergyStonePrefab: {fileID: 1436666365584530208, guid: 07e84c8f9e5ad4b1caa2ad3e945225f6, type: 3}
+  TotalBaseEnergy: 0
 --- !u!1 &8457670106380050413
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,7 +434,7 @@ MonoBehaviour:
       m_Calls: []
   Name: 
   DeckSwappable: 1
-  EnergyDisplay: {fileID: 0}
+  EnergyDisplayReference: {fileID: 0}
   CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
   IsPlayer: 1
   CardObjects: []
