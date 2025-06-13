@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.InputSystem;
 using System.Collections;
+using TMPro;
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -42,6 +43,7 @@ public class BattleManager : MonoBehaviour
     // --- UI References ---
     [SerializeField] bool ConsoleActiveAtStart = false;
     DebugConsole ConsoleInstance;
+    TMP_Text DisplayText;
 
     // --- Unity Methods ---
     void Awake()
@@ -72,6 +74,7 @@ public class BattleManager : MonoBehaviour
         Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
 
         InputActions = new PlayerInputActions();
+        DisplayText = transform.Find("Display").transform.Find("DisplayText").GetComponent<TMP_Text>();
     }
     void OnEnable()
     {
@@ -87,6 +90,7 @@ public class BattleManager : MonoBehaviour
 
     void Start()
     {
+        DisplayText.text = "";
         ConsoleInstance = DebugConsole.Instance;
         ConsoleInstance.SwapCommand.AddListener(HandleSwapCommand);
         ConsoleInstance.WinCommand.AddListener(HandleWinCommand);
@@ -204,24 +208,24 @@ public class BattleManager : MonoBehaviour
         {
             if (source == Player)
             {
-                GameOver("YOU LOST! YOUR STACK IS DEPLETED!");
+                GameOver("YOU LOST! YOUR STACK IS DEPLETED!", "Game Over");
             }
             else if (source == Enemy)
             {
-                GameOver("YOU WIN! ENEMY STACK DEPLETED!");
+                GameOver("YOU WIN! ENEMY STACK DEPLETED!", "Victory!");
             }
             return true;
         }
         return false;
     }
 
-    void GameOver(string message)
+    void GameOver(string message, string displayMessage)
     {
-        // TODO: make a display for this
         CurrentState = BattleState.GameOver;
         ConsoleInstance.Log("\n====================");
         ConsoleInstance.Log($"GAME OVER: {message}");
         ConsoleInstance.Log("====================");
+        DisplayText.text = displayMessage;
     }
 
 
@@ -453,7 +457,7 @@ public class BattleManager : MonoBehaviour
 
     void HandleWinCommand()
     {
-        GameOver("YOU WON BY CHEATING!");
+        GameOver("YOU WON BY CHEATING!", "COMMAND SUCCESSFUL");
     }
 
     void ToggleConsole(InputAction.CallbackContext context)
