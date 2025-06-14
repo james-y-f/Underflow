@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 using TMPro;
+using Unity.VisualScripting;
+using System.Collections;
 
 public class TooltipManager : MonoBehaviour
 {
@@ -28,13 +30,13 @@ public class TooltipManager : MonoBehaviour
 
     public void ShowTooltip(string message)
     {
-        gameObject.SetActive(true);
         TooltipText.text = message;
+        gameObject.SetActive(true);
     }
 
     public void HideTooltip()
     {
-        gameObject.SetActive(false);
         TooltipText.text = string.Empty;
+        gameObject.SetActive(false);
     }
 }

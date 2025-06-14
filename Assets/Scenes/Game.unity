@@ -1360,6 +1360,8 @@ GameObject:
   - component: {fileID: 459270658}
   - component: {fileID: 459270657}
   - component: {fileID: 459270659}
+  - component: {fileID: 459270660}
+  - component: {fileID: 459270661}
   m_Layer: 5
   m_Name: TooltipBox
   m_TagString: Untagged
@@ -1385,7 +1387,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 960, y: 540}
-  m_SizeDelta: {x: 900, y: 300}
+  m_SizeDelta: {x: 600, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &459270657
 MonoBehaviour:
@@ -1438,6 +1440,46 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TooltipText: {fileID: 0}
+--- !u!114 &459270660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 459270655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 0
+  m_VerticalFit: 2
+--- !u!114 &459270661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 459270655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 20
+    m_Right: 20
+    m_Top: 20
+    m_Bottom: 20
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 1
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!4 &506708979 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4716439685356255823, guid: 8adbc479804c542b29228aae574a6f39, type: 3}
@@ -4136,6 +4178,7 @@ GameObject:
   - component: {fileID: 1324902650}
   - component: {fileID: 1324902652}
   - component: {fileID: 1324902651}
+  - component: {fileID: 1324902653}
   m_Layer: 5
   m_Name: TooltipText
   m_TagString: Untagged
@@ -4157,11 +4200,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 459270656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 10, y: 10}
-  m_SizeDelta: {x: -20, y: -20}
-  m_Pivot: {x: -0.00000004284084, y: -0.000000019557774}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 121.515, y: -40.11}
+  m_SizeDelta: {x: 203.03, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1324902651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4261,6 +4304,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1324902649}
   m_CullTransparentMesh: 1
+--- !u!114 &1324902653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1324902649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 0
+  m_VerticalFit: 2
 --- !u!1 &1340764409
 GameObject:
   m_ObjectHideFlags: 0
