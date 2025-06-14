@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: Player
   BaseViewSize: 7
-  BaseEnergy: 1
+  BaseEnergy: 2
   Deck: {fileID: 11400000, guid: 749624c7a91e64140893d03f498f6e5c, type: 2}
   ShuffleAtStart: 1
