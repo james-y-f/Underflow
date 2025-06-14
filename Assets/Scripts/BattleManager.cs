@@ -33,12 +33,15 @@ public class BattleManager : MonoBehaviour
 
     [SerializeField] Entity Player;
     [SerializeField] Entity Enemy;
-    [SerializeField] EntityBaseStats PlayerBaseStats;
-    [SerializeField] EntityBaseStats EnemyBaseStats;
-    [SerializeField] ButtonController ExecuteNextButton;
-
-    [SerializeField] ButtonController EndTurnButton;
-    [SerializeField] ButtonController ExecuteAllButton;
+    ButtonController ExecuteNextButton;
+    ButtonController EndTurnButton;
+    ButtonController ExecuteAllButton;
+    ButtonController PauseButton;
+    ButtonController LevelSelectButton;
+    ButtonController RestartButton;
+    StackDisplay PlayerStackDisplay;
+    StackDisplay EnemyStackDisplay;
+    Level CurrentLevel;
 
     // --- UI References ---
     [SerializeField] bool ConsoleActiveAtStart = false;
@@ -58,20 +61,22 @@ public class BattleManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        StackDisplay playerStackDisplay = GameObject.FindGameObjectWithTag(Constants.PlayerStackTag).GetComponent<StackDisplay>();
-        StackDisplay enemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
-        Assert.IsNotNull(playerStackDisplay);
-        Assert.IsNotNull(enemyStackDisplay);
+        PlayerStackDisplay = GameObject.FindGameObjectWithTag(Constants.PlayerStackTag).GetComponent<StackDisplay>();
+        EnemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
+        Assert.IsNotNull(PlayerStackDisplay);
+        Assert.IsNotNull(EnemyStackDisplay);
 
         ExecuteNextButton = GameObject.FindGameObjectWithTag(Constants.ExecuteNextButtonTag).GetComponent<ButtonController>();
         EndTurnButton = GameObject.FindGameObjectWithTag(Constants.EndTurnButtonTag).GetComponent<ButtonController>();
         ExecuteAllButton = GameObject.FindGameObjectWithTag(Constants.ExecuteAllButtonTag).GetComponent<ButtonController>();
+        PauseButton = GameObject.FindGameObjectWithTag(Constants.PauseButtonTag).GetComponent<ButtonController>();
+        LevelSelectButton = GameObject.FindGameObjectWithTag(Constants.LevelSelectButtonTag).GetComponent<ButtonController>();
+        RestartButton = GameObject.FindGameObjectWithTag(Constants.RestartButtonTag).GetComponent<ButtonController>();
         Assert.IsNotNull(ExecuteNextButton);
         Assert.IsNotNull(EndTurnButton);
         Assert.IsNotNull(ExecuteAllButton);
-
-        Player = new Entity(PlayerBaseStats, true, playerStackDisplay);
-        Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
+        Assert.IsNotNull(PauseButton);
+        Assert.IsNotNull(RestartButton);
 
         InputActions = new PlayerInputActions();
         DisplayText = transform.Find("Display").transform.Find("DisplayText").GetComponent<TMP_Text>();
@@ -90,34 +95,48 @@ public class BattleManager : MonoBehaviour
 
     void Start()
     {
-        DisplayText.text = "";
         ConsoleInstance = DebugConsole.Instance;
         ConsoleInstance.SwapCommand.AddListener(HandleSwapCommand);
         ConsoleInstance.WinCommand.AddListener(HandleWinCommand);
         ConsoleInstance.gameObject.SetActive(ConsoleActiveAtStart);
 
-        Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
-        Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        PlayerStackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        EnemyStackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
 
         ExecuteNextButton.OnClick.AddListener(PlayerExecuteNext);
         EndTurnButton.OnClick.AddListener(PlayerEndTurn);
         ExecuteAllButton.OnClick.AddListener(PlayerExecuteAll);
-
-        CurrentState = BattleState.Setup;
-        SetupGame();
+        PauseButton.OnClick.AddListener(HandlePause);
+        LevelSelectButton.OnClick.AddListener(HandleLevelSelect);
+        RestartButton.OnClick.AddListener(HandleRestart);
     }
 
     // --- Game Flow ---
 
-    void SetupGame()
+    public void LoadLevel(Level level)
     {
-        CurrentState = BattleState.Setup;
-        ConsoleInstance.Log("Setting up game...");
+        DisplayText.text = "";
 
-        LoadDisplays();
+        CurrentLevel = level;
+        CurrentState = BattleState.Setup;
+        ConsoleInstance.Log($"Setting up level {level.LevelNumber}:");
+
+        Player = new Entity(level.PlayerBaseStats, true, PlayerStackDisplay);
+        Enemy = new Entity(level.EnemyBaseStats, false, EnemyStackDisplay);
+        // load both decks
+        for (int i = 0; i < Player.Stack.Count; i++)
+        {
+            Player.StackDisplay.InsertCardNoAnim(Player.Stack[i]);
+        }
+        for (int i = 0; i < Enemy.Stack.Count; i++)
+        {
+            Enemy.StackDisplay.InsertCardNoAnim(Enemy.Stack[i]);
+        }
 
         Player.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Player.BaseEnergy);
         Enemy.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Enemy.BaseEnergy);
+        LevelSelectButton.gameObject.SetActive(false);
+        RestartButton.gameObject.SetActive(false);
 
         StartCoroutine(StartPlayerTurn());
     }
@@ -129,6 +148,7 @@ public class BattleManager : MonoBehaviour
         ConsoleInstance.LogValidCommands();
         ExecuteNextButton.SetInteractible(true);
         ExecuteAllButton.SetInteractible(true);
+        PauseButton.SetInteractible(true);
         EndTurnButton.SetInteractible(false); // player must execute at least one card per turn
 
         Player.ResetEnergy();
@@ -208,26 +228,33 @@ public class BattleManager : MonoBehaviour
         {
             if (source == Player)
             {
-                GameOver("YOU LOST! YOUR STACK IS DEPLETED!", "Game Over");
+                GameOver(false, "YOU LOST! YOUR STACK IS DEPLETED!", "Game Over");
             }
             else if (source == Enemy)
             {
-                GameOver("YOU WIN! ENEMY STACK DEPLETED!", "Victory!");
+                GameOver(true, "YOU WIN! ENEMY STACK DEPLETED!", "Victory!");
             }
             return true;
         }
         return false;
     }
 
-    void GameOver(string message, string displayMessage)
+    void GameOver(bool win, string message, string displayMessage)
     {
         CurrentState = BattleState.GameOver;
+        SetAllButtonsInteractible(false);
         ConsoleInstance.Log("\n====================");
         ConsoleInstance.Log($"GAME OVER: {message}");
         ConsoleInstance.Log("====================");
         DisplayText.text = displayMessage;
+        if (win)
+        {
+            GameManager.Instance.UnlockLevel(CurrentLevel.LevelNumber + 1);
+        }
+        CleanUp();
+        LevelSelectButton.gameObject.SetActive(true);
+        RestartButton.gameObject.SetActive(true);
     }
-
 
     // --- Core Mechanics Implementation ---
 
@@ -276,6 +303,7 @@ public class BattleManager : MonoBehaviour
             else
             {
                 EndTurnButton.SetInteractible(true);
+                PauseButton.SetInteractible(true);
             }
         }
     }
@@ -426,7 +454,6 @@ public class BattleManager : MonoBehaviour
             if (addIndices.Count == 0)
             {
                 addIdx = 0; // because you can still add to an empty list (and you always add to the top)
-
             }
             else
             {
@@ -455,9 +482,38 @@ public class BattleManager : MonoBehaviour
         SwapStack(targetEntity, currentIndex, targetIndex, false, true);
     }
 
+    void HandleLevelSelect()
+    {
+        GameManager.Instance.MoveToLevels();
+    }
+
+    void HandlePause()
+    {
+        GameManager.Instance.MoveToPause();
+    }
+
+    public void HandleRestart()
+    {
+        if (!GameIsOver)
+        {
+            GameOver(false, "", "");
+        }
+        LoadLevel(CurrentLevel);
+        GameManager.Instance.MoveToBattle();
+    }
+
+    public void HandleMainMenu()
+    {
+        if (!GameIsOver)
+        {
+            GameOver(false, "", "");
+        }
+        GameManager.Instance.MoveToStart();
+    }
+
     void HandleWinCommand()
     {
-        GameOver("YOU WON BY CHEATING!", "CHEAT SUCCESSFUL");
+        GameOver(true, "YOU WON BY CHEATING!", "CHEAT SUCCESSFUL");
     }
 
     void ToggleConsole(InputAction.CallbackContext context)
@@ -467,17 +523,10 @@ public class BattleManager : MonoBehaviour
     }
 
     // --- Helper Functions ---
-
-    void LoadDisplays()
+    void CleanUp()
     {
-        for (int i = 0; i < Player.Stack.Count; i++)
-        {
-            Player.StackDisplay.InsertCardNoAnim(Player.Stack[i]);
-        }
-        for (int i = 0; i < Enemy.Stack.Count; i++)
-        {
-            Enemy.StackDisplay.InsertCardNoAnim(Enemy.Stack[i]);
-        }
+        Player.StackDisplay.Clear();
+        Enemy.StackDisplay.Clear();
     }
 
     Entity ResolveTarget(Entity source, EffectTarget target)
@@ -504,7 +553,6 @@ public class BattleManager : MonoBehaviour
         {
             return value.Constant;
         }
-        // FIXME: finish this
         return 0;
     }
 
@@ -518,6 +566,7 @@ public class BattleManager : MonoBehaviour
         ExecuteNextButton.SetInteractible(interactible);
         EndTurnButton.SetInteractible(interactible);
         ExecuteAllButton.SetInteractible(interactible);
+        PauseButton.SetInteractible(interactible);
     }
 
     public string PrintDebugStatus()

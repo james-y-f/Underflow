@@ -26,16 +26,16 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4617936075798751866}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.369}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0.362}
+  m_LocalScale: {x: 1, y: 0.71428573, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7191277177310517409}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.51}
-  m_SizeDelta: {x: 20, y: 5}
+  m_AnchoredPosition: {x: -0.168, y: 0.51}
+  m_SizeDelta: {x: 0.6696, y: 0.328}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &1356241897240370955
 MeshRenderer:
@@ -129,8 +129,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2
-  m_fontSizeBase: 2
+  m_fontSize: 1.2
+  m_fontSizeBase: 1.2
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -167,7 +167,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 9.001723, y: 2.2580457, z: 9.566155, w: 2.37216}
+  m_margin: {x: 0.0025748312, y: 0.0008539409, z: 0.002282232, w: 0.047498204}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
@@ -202,16 +202,16 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4629895814737953337}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.358}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: 0.3575}
+  m_LocalScale: {x: 1, y: 0.71428573, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7191277177310517409}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.51}
-  m_SizeDelta: {x: 20, y: 5}
+  m_AnchoredPosition: {x: 0.311, y: 0.51}
+  m_SizeDelta: {x: 0.3686, y: 0.296}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &1969848203841437720
 MeshRenderer:
@@ -305,8 +305,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2
-  m_fontSizeBase: 2
+  m_fontSize: 1.2
+  m_fontSizeBase: 1.2
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -343,7 +343,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 10.443102, y: 2.2580457, z: 8.998508, w: 2.37216}
+  m_margin: {x: 0.003144607, y: 0.0039184093, z: -0.0031385422, w: 0.061538823}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
@@ -492,15 +492,14 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   ParentStack: {fileID: 0}
-  Info:
+  CardReference:
     Title: 
-    OverrideGeneratedDescription: 0
-    Description: 
     EnergyCost: 0
     Rarity: 0
-    Swappable: 0
     UID: 0
-  CardSwappable: 1
+    Properties: 
+    Effects: []
+    OnDeleteEffects: []
   InView: 0
 --- !u!114 &4486691972463311031
 MonoBehaviour:
@@ -580,16 +579,16 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8192914415058168335}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.188}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0, z: -0.1766}
+  m_LocalScale: {x: 1, y: 0.71428573, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7191277177310517409}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.51}
-  m_SizeDelta: {x: 20, y: 5}
+  m_AnchoredPosition: {x: 0.0013, y: 0.51}
+  m_SizeDelta: {x: 1.0077, y: 0.903}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &5509885436538300495
 MeshRenderer:
@@ -685,8 +684,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 1.5
-  m_fontSizeBase: 1.5
+  m_fontSize: 0.8
+  m_fontSizeBase: 0.8
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -723,7 +722,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 9.023205, y: 2.2580457, z: 9.030731, w: 1.1281893}
+  m_margin: {x: 0.0059853196, y: -0.1860117, z: 0.0031767488, w: 0.0023953915}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0

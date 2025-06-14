@@ -9,11 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c43b432c185864130b3a056df3560c37, type: 3}
-  m_Name: Test Player
+  m_Script: {fileID: 11500000, guid: 38ee585e9666c4ee5b0ef2d84f8a4283, type: 3}
+  m_Name: Level 1
   m_EditorClassIdentifier: 
-  Name: Player
-  BaseViewSize: 7
-  BaseEnergy: 1
-  Deck: {fileID: 11400000, guid: 749624c7a91e64140893d03f498f6e5c, type: 2}
-  ShuffleAtStart: 1
+  LevelNumber: 0
+  PlayerBaseStats: {fileID: 11400000, guid: 8b37f14826c0e4b12993da025d776b6c, type: 2}
+  EnemyBaseStats: {fileID: 11400000, guid: 7f6849c626e9d4621b016e160ef4320a, type: 2}

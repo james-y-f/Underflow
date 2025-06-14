@@ -25,17 +25,31 @@ public class EnergyDisplay : MonoBehaviour
 
     public void SpawnBaseEnergy(int amount)
     {
-        TotalBaseEnergy = amount;
-        Assert.IsTrue(TotalBaseEnergy > 0);
+        Assert.IsTrue(amount > 0);
         Debug.Log($"Spawning {TotalBaseEnergy} Base Energy");
-        for (int i = 0; i < TotalBaseEnergy; i++)
+        if (TotalBaseEnergy == amount) return;
+        if (amount > TotalBaseEnergy)
         {
-            GameObject newStone = Instantiate(BaseEnergyStonePrefab,
-                SpawnPoint.position + Constants.BaseEnergySpawnHeightAdjustment + BaseStones.Count * Constants.EnergySpawnDisplacement,
-                SpawnPoint.rotation);
-            GetColorController(newStone).SetDimmed(true);
-            BaseStones.Add(newStone);
+            for (int i = 0; i < amount - TotalBaseEnergy; i++)
+            {
+                GameObject newStone = Instantiate(BaseEnergyStonePrefab,
+                    SpawnPoint.position + Constants.BaseEnergySpawnHeightAdjustment + BaseStones.Count * Constants.EnergySpawnDisplacement,
+                    SpawnPoint.rotation);
+                GetColorController(newStone).SetDimmed(true);
+                BaseStones.Add(newStone);
+            }
         }
+        else
+        {
+            for (int i = 0; i < TotalBaseEnergy - amount; i++)
+            {
+                GameObject removedStone = BaseStones[BaseStones.Count - 1];
+                BaseStones.Remove(removedStone);
+                Destroy(removedStone);
+            }
+        }
+        TotalBaseEnergy = amount;
+        Assert.IsTrue(BaseStones.Count == TotalBaseEnergy);
     }
 
     IEnumerator GainBaseEnergy(int amount = int.MaxValue)

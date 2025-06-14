@@ -11,6 +11,9 @@ TagManager:
   - ExecuteNextButton
   - EndTurnButton
   - ExecuteAllButton
+  - PauseButton
+  - BackButton
+  - RestartButton
   layers:
   - Default
   - TransparentFX
