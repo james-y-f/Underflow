@@ -1682,8 +1682,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TooltipText: {fileID: 0}
-  MenuMusic: {fileID: 0}
-  BattleMusic: {fileID: 0}
 --- !u!114 &459270660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4683,7 +4681,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 696321454589924922, guid: 8adbc479804c542b29228aae574a6f39, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: MoveToStart
+      value: MoveToCredits
       objectReference: {fileID: 0}
     - target: {fileID: 696321454589924922, guid: 8adbc479804c542b29228aae574a6f39, type: 3}
       propertyPath: OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
