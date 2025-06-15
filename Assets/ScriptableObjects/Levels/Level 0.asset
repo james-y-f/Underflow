@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Level 0
   m_EditorClassIdentifier: 
   LevelNumber: 0
-  PlayerBaseStats: {fileID: 0}
-  EnemyBaseStats: {fileID: 0}
+  PlayerBaseStats: {fileID: 11400000, guid: a554cecd097534ac0b52cb67e6627869, type: 2}
+  EnemyBaseStats: {fileID: 11400000, guid: 0597038cf7738453198e25a8b38ada3a, type: 2}

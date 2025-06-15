@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 38ee585e9666c4ee5b0ef2d84f8a4283, type: 3}
   m_Name: Level 1
   m_EditorClassIdentifier: 
-  LevelNumber: 0
-  PlayerBaseStats: {fileID: 11400000, guid: 8b37f14826c0e4b12993da025d776b6c, type: 2}
-  EnemyBaseStats: {fileID: 11400000, guid: 7f6849c626e9d4621b016e160ef4320a, type: 2}
+  LevelNumber: 1
+  PlayerBaseStats: {fileID: 11400000, guid: 1a01c3a9adaa94cc28bcedf5c8c340f8, type: 2}
+  EnemyBaseStats: {fileID: 11400000, guid: 1bb2120d90353436ebd3293d174d4c53, type: 2}

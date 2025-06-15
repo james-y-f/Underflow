@@ -3,7 +3,6 @@ using System.Text;
 [System.Serializable]
 public class Entity
 {
-    public EntityBaseStats BaseStats;
     public string Name;
     public bool IsPlayer;
     public Deck Stack;
@@ -43,12 +42,11 @@ public class Entity
 
     public Entity(EntityBaseStats baseStats, bool isPlayer, StackDisplay stackDisplay)
     {
-        BaseStats = baseStats;
         IsPlayer = isPlayer;
-        Name = BaseStats.Name;
-        baseViewSize = BaseStats.BaseViewSize;
-        BaseEnergy = BaseStats.BaseEnergy;
-        ShuffleAtStart = BaseStats.ShuffleAtStart;
+        Name = baseStats.Name;
+        baseViewSize = baseStats.BaseViewSize;
+        BaseEnergy = baseStats.BaseEnergy;
+        ShuffleAtStart = baseStats.ShuffleAtStart;
         ResetTemporaryStats();
         Stack = new Deck(baseStats.Deck);
         Discard = new Deck();

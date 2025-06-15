@@ -168,9 +168,9 @@ public struct CardEffect
                 return effectString.ToString();
 
             case EffectType.MakeUnswappable:
-                effectString.Append($"Make {PluralHelper(Values[0].Constant, "card")} ");
+                effectString.Append($"Lock {PluralHelper(Values[0].Constant, "card")} ");
                 effectString.Append(ModeTargetHelper("from"));
-                effectString.Append(" Unswappable");
+                effectString.Append(" (They become Unswappable)");
                 return effectString.ToString();
 
             default:

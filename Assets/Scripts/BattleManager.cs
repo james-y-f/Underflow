@@ -79,7 +79,7 @@ public class BattleManager : MonoBehaviour
         Assert.IsNotNull(RestartButton);
 
         InputActions = new PlayerInputActions();
-        DisplayText = transform.Find("Display").transform.Find("DisplayText").GetComponent<TMP_Text>();
+        DisplayText = transform.Find("ResultDisplay").transform.Find("DisplayText").GetComponent<TMP_Text>();
     }
     void OnEnable()
     {
@@ -137,6 +137,11 @@ public class BattleManager : MonoBehaviour
         Enemy.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Enemy.BaseEnergy);
         LevelSelectButton.gameObject.SetActive(false);
         RestartButton.gameObject.SetActive(false);
+
+        if (level.LevelNumber == 0)
+        {
+            TutorialManager.Instance.StartTutorial();
+        }
 
         StartCoroutine(StartPlayerTurn());
     }
@@ -247,11 +252,15 @@ public class BattleManager : MonoBehaviour
         ConsoleInstance.Log($"GAME OVER: {message}");
         ConsoleInstance.Log("====================");
         DisplayText.text = displayMessage;
+        CleanUp();
         if (win)
         {
+            if (CurrentLevel.LevelNumber >= GameManager.Instance.MaxLevel - 1)
+            {
+                GameManager.Instance.MoveToVictory();
+            }
             GameManager.Instance.UnlockLevel(CurrentLevel.LevelNumber + 1);
         }
-        CleanUp();
         LevelSelectButton.gameObject.SetActive(true);
         RestartButton.gameObject.SetActive(true);
     }
@@ -274,7 +283,7 @@ public class BattleManager : MonoBehaviour
             return false;
         }
         target.StackDisplay.UpdateToOrder(newOrder);
-        ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) successful");
+        // ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) successful");
         return true;
     }
 

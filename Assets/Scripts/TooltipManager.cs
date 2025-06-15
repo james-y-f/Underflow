@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.Assertions;
 using TMPro;
-using Unity.VisualScripting;
-using System.Collections;
 
 public class TooltipManager : MonoBehaviour
 {
     public static TooltipManager Instance;
     public TextMeshProUGUI TooltipText;
+
+    [SerializeField] AudioClip MenuMusic;
+    [SerializeField] AudioClip BattleMusic;
     void Awake()
     {
         if (Instance == null)
@@ -24,7 +25,6 @@ public class TooltipManager : MonoBehaviour
 
     void Start()
     {
-        Cursor.visible = true;
         gameObject.SetActive(false);
     }
 

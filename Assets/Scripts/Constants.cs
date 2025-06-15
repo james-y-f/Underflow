@@ -47,14 +47,14 @@ public static class Constants
         get { return new Vector3(-20f, CameraHeight, 0f); }
         private set { }
     }
-    public static Vector3 HowToCameraPosition
+    public static Vector3 PauseCameraPositon
     {
         get { return new Vector3(0f, CameraHeight, -12f); }
         private set { }
     }
-    public static Vector3 PauseCameraPositon
+    public static Vector3 VictoryCameraPositon
     {
-        get { return new Vector3(-40f, CameraHeight, -12f); }
+        get { return new Vector3(-20f, CameraHeight, 12f); }
         private set { }
     }
 
