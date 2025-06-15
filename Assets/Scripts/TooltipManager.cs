@@ -7,8 +7,6 @@ public class TooltipManager : MonoBehaviour
     public static TooltipManager Instance;
     public TextMeshProUGUI TooltipText;
 
-    [SerializeField] AudioClip MenuMusic;
-    [SerializeField] AudioClip BattleMusic;
     void Awake()
     {
         if (Instance == null)
