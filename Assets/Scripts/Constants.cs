@@ -14,9 +14,49 @@ public static class Constants
     public const string EndTurnButtonTag = "EndTurnButton";
 
     public const string ExecuteAllButtonTag = "ExecuteAllButton";
+    public const string PauseButtonTag = "PauseButton";
+    public const string LevelSelectButtonTag = "BackButton";
+    public const string RestartButtonTag = "RestartButton";
     // layers
     public const string PlayerCardsLayerName = "PlayerCards";
     public const string EnemyCardsLayerName = "EnemyCards";
+
+    // Camera Movement 
+    public const float DefaultCameraMoveSpeedFactor = 7;
+    public const float CameraHeight = 10f;
+    public static Vector3 BattleCameraPosition
+    {
+        get { return new Vector3(-20f, CameraHeight, -12f); }
+        private set { }
+    }
+
+    public static Vector3 StartCameraPosition
+    {
+        get { return new Vector3(0f, CameraHeight, 0f); }
+        private set { }
+    }
+
+    public static Vector3 CreditsCameraPosition
+    {
+        get { return new Vector3(0, CameraHeight, 12f); }
+        private set { }
+    }
+
+    public static Vector3 TransitionCameraPosition
+    {
+        get { return new Vector3(-20f, CameraHeight, 0f); }
+        private set { }
+    }
+    public static Vector3 PauseCameraPositon
+    {
+        get { return new Vector3(0f, CameraHeight, -12f); }
+        private set { }
+    }
+    public static Vector3 VictoryCameraPositon
+    {
+        get { return new Vector3(-20f, CameraHeight, 12f); }
+        private set { }
+    }
 
     // Card Movement    
     public const float PosTolerance = 0.02f;
@@ -80,6 +120,12 @@ public static class Constants
     public static Vector3 EnergySpawnDisplacement
     {
         get { return new Vector3(-0.5f, 0f, 0f); }
+        private set { }
+    }
+
+    public static Vector3 BaseEnergySpawnHeightAdjustment
+    {
+        get { return new Vector3(0f, 0.1f, 0f); }
         private set { }
     }
 

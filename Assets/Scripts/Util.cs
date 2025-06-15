@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Text;
-using Unity.VisualScripting;
 
 public class Util
 {
@@ -76,6 +75,31 @@ public class Util
         StringBuilder builder = new StringBuilder();
         builder.Append(GetDisplayText(card));
         builder.Append($":\n{card.Description}");
+        string referencedCardText = GetReferenceCardsFullText(card.Effects);
+        if (referencedCardText != string.Empty)
+        {
+            builder.Append($"\n\n{referencedCardText}");
+        }
+        return builder.ToString();
+    }
+
+    // TODO: prevent recursive references
+    static string GetReferenceCardsFullText(List<CardEffect> effects)
+    {
+        List<CardTemplate> uniqueTemplates = new List<CardTemplate>();
+        foreach (CardEffect effect in effects)
+        {
+            CardTemplate referencedTemplate = effect.ReferenceCardTemplate;
+            if (referencedTemplate == null) continue;
+            if (uniqueTemplates.Contains(referencedTemplate)) continue;
+            uniqueTemplates.Add(referencedTemplate);
+        }
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < uniqueTemplates.Count; i++)
+        {
+            builder.Append(GetFullText(uniqueTemplates[i]));
+            if (i < uniqueTemplates.Count - 1) builder.Append("\n\n");
+        }
         return builder.ToString();
     }
 }

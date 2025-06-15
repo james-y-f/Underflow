@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine.InputSystem;
 using System.Collections;
+using TMPro;
 public class BattleManager : MonoBehaviour
 {
     public static BattleManager Instance;
@@ -32,16 +33,20 @@ public class BattleManager : MonoBehaviour
 
     [SerializeField] Entity Player;
     [SerializeField] Entity Enemy;
-    [SerializeField] EntityBaseStats PlayerBaseStats;
-    [SerializeField] EntityBaseStats EnemyBaseStats;
-    [SerializeField] ButtonController ExecuteNextButton;
-
-    [SerializeField] ButtonController EndTurnButton;
-    [SerializeField] ButtonController ExecuteAllButton;
+    ButtonController ExecuteNextButton;
+    ButtonController EndTurnButton;
+    ButtonController ExecuteAllButton;
+    ButtonController PauseButton;
+    ButtonController LevelSelectButton;
+    ButtonController RestartButton;
+    StackDisplay PlayerStackDisplay;
+    StackDisplay EnemyStackDisplay;
+    Level CurrentLevel;
 
     // --- UI References ---
     [SerializeField] bool ConsoleActiveAtStart = false;
     DebugConsole ConsoleInstance;
+    TMP_Text DisplayText;
 
     // --- Unity Methods ---
     void Awake()
@@ -56,23 +61,25 @@ public class BattleManager : MonoBehaviour
             Destroy(gameObject);
         }
 
-        StackDisplay playerStackDisplay = GameObject.FindGameObjectWithTag(Constants.PlayerStackTag).GetComponent<StackDisplay>();
-        StackDisplay enemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
-        Assert.IsNotNull(playerStackDisplay);
-        Assert.IsNotNull(enemyStackDisplay);
+        PlayerStackDisplay = GameObject.FindGameObjectWithTag(Constants.PlayerStackTag).GetComponent<StackDisplay>();
+        EnemyStackDisplay = GameObject.FindGameObjectWithTag(Constants.EnemyStackTag).GetComponent<StackDisplay>();
+        Assert.IsNotNull(PlayerStackDisplay);
+        Assert.IsNotNull(EnemyStackDisplay);
 
         ExecuteNextButton = GameObject.FindGameObjectWithTag(Constants.ExecuteNextButtonTag).GetComponent<ButtonController>();
         EndTurnButton = GameObject.FindGameObjectWithTag(Constants.EndTurnButtonTag).GetComponent<ButtonController>();
         ExecuteAllButton = GameObject.FindGameObjectWithTag(Constants.ExecuteAllButtonTag).GetComponent<ButtonController>();
+        PauseButton = GameObject.FindGameObjectWithTag(Constants.PauseButtonTag).GetComponent<ButtonController>();
+        LevelSelectButton = GameObject.FindGameObjectWithTag(Constants.LevelSelectButtonTag).GetComponent<ButtonController>();
+        RestartButton = GameObject.FindGameObjectWithTag(Constants.RestartButtonTag).GetComponent<ButtonController>();
         Assert.IsNotNull(ExecuteNextButton);
         Assert.IsNotNull(EndTurnButton);
         Assert.IsNotNull(ExecuteAllButton);
+        Assert.IsNotNull(PauseButton);
+        Assert.IsNotNull(RestartButton);
 
-        Player = new Entity(PlayerBaseStats, true, playerStackDisplay);
-        Enemy = new Entity(EnemyBaseStats, false, enemyStackDisplay);
         InputActions = new PlayerInputActions();
-
-
+        DisplayText = transform.Find("ResultDisplay").transform.Find("DisplayText").GetComponent<TMP_Text>();
     }
     void OnEnable()
     {
@@ -90,27 +97,51 @@ public class BattleManager : MonoBehaviour
     {
         ConsoleInstance = DebugConsole.Instance;
         ConsoleInstance.SwapCommand.AddListener(HandleSwapCommand);
+        ConsoleInstance.WinCommand.AddListener(HandleWinCommand);
         ConsoleInstance.gameObject.SetActive(ConsoleActiveAtStart);
 
-        Player.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
-        Enemy.StackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        PlayerStackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
+        EnemyStackDisplay.SwapAttempt.AddListener(HandleSwapAttempt);
 
         ExecuteNextButton.OnClick.AddListener(PlayerExecuteNext);
         EndTurnButton.OnClick.AddListener(PlayerEndTurn);
         ExecuteAllButton.OnClick.AddListener(PlayerExecuteAll);
-
-        CurrentState = BattleState.Setup;
-        SetupGame();
+        PauseButton.OnClick.AddListener(HandlePause);
+        LevelSelectButton.OnClick.AddListener(HandleLevelSelect);
+        RestartButton.OnClick.AddListener(HandleRestart);
     }
 
     // --- Game Flow ---
 
-    void SetupGame()
+    public void LoadLevel(Level level)
     {
-        CurrentState = BattleState.Setup;
-        ConsoleInstance.Log("Setting up game...");
+        DisplayText.text = "";
 
-        LoadDisplays();
+        CurrentLevel = level;
+        CurrentState = BattleState.Setup;
+        ConsoleInstance.Log($"Setting up level {level.LevelNumber}:");
+
+        Player = new Entity(level.PlayerBaseStats, true, PlayerStackDisplay);
+        Enemy = new Entity(level.EnemyBaseStats, false, EnemyStackDisplay);
+        // load both decks
+        for (int i = 0; i < Player.Stack.Count; i++)
+        {
+            Player.StackDisplay.InsertCardNoAnim(Player.Stack[i]);
+        }
+        for (int i = 0; i < Enemy.Stack.Count; i++)
+        {
+            Enemy.StackDisplay.InsertCardNoAnim(Enemy.Stack[i]);
+        }
+
+        Player.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Player.BaseEnergy);
+        Enemy.StackDisplay.EnergyDisplayReference.SpawnBaseEnergy(Enemy.BaseEnergy);
+        LevelSelectButton.gameObject.SetActive(false);
+        RestartButton.gameObject.SetActive(false);
+
+        if (level.LevelNumber == 0)
+        {
+            TutorialManager.Instance.StartTutorial();
+        }
 
         StartCoroutine(StartPlayerTurn());
     }
@@ -122,15 +153,11 @@ public class BattleManager : MonoBehaviour
         ConsoleInstance.LogValidCommands();
         ExecuteNextButton.SetInteractible(true);
         ExecuteAllButton.SetInteractible(true);
+        PauseButton.SetInteractible(true);
         EndTurnButton.SetInteractible(false); // player must execute at least one card per turn
 
         Player.ResetEnergy();
-
-        Player.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
-        yield return StartCoroutine(Player.StackDisplay.EnergyDisplay.SetEnergy(Player.CurrentEnergy));
-
-        Enemy.StackDisplay.EnergyDisplay.RemoveAllEnergy();
-        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetTransparentEnergy(Enemy.BaseEnergy + Enemy.CarryOverEnergy));
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplayReference.StartTurnCoroutine(Player.CurrentEnergy));
 
         CurrentState = BattleState.PlayerTurn;
     }
@@ -153,6 +180,12 @@ public class BattleManager : MonoBehaviour
     {
         if (CurrentState != BattleState.PlayerTurn && CurrentState != BattleState.PlayerExecution) return;
         SetAllButtonsInteractible(false);
+        StartCoroutine(PlayerEndTurnCoroutine());
+    }
+
+    IEnumerator PlayerEndTurnCoroutine()
+    {
+        yield return StartCoroutine(Player.StackDisplay.EnergyDisplayReference.RemoveUnusedEnergy());
         StartCoroutine(EnemyTurn());
     }
 
@@ -178,9 +211,10 @@ public class BattleManager : MonoBehaviour
         CurrentState = BattleState.EnemyTurn;
 
         Enemy.ResetEnergy();
-        Enemy.StackDisplay.EnergyDisplay.RemoveAllTransparentEnergy();
-        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplay.SetEnergy(Enemy.CurrentEnergy));
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplayReference.StartTurnCoroutine(Enemy.CurrentEnergy));
+
         yield return StartCoroutine(ExecuteAllCoroutine(Enemy));
+        yield return StartCoroutine(Enemy.StackDisplay.EnergyDisplayReference.RemoveUnusedEnergy());
         if (GameIsOver) yield break;
 
         // Transition back to Player Turn
@@ -199,26 +233,37 @@ public class BattleManager : MonoBehaviour
         {
             if (source == Player)
             {
-                GameOver("YOU LOST! YOUR STACK IS DEPLETED!");
+                GameOver(false, "YOU LOST! YOUR STACK IS DEPLETED!", "Game Over");
             }
             else if (source == Enemy)
             {
-                GameOver("YOU WIN! ENEMY STACK DEPLETED!");
+                GameOver(true, "YOU WIN! ENEMY STACK DEPLETED!", "Victory!");
             }
             return true;
         }
         return false;
     }
 
-    void GameOver(string message)
+    void GameOver(bool win, string message, string displayMessage)
     {
-        // TODO: make a display for this
         CurrentState = BattleState.GameOver;
+        SetAllButtonsInteractible(false);
         ConsoleInstance.Log("\n====================");
         ConsoleInstance.Log($"GAME OVER: {message}");
         ConsoleInstance.Log("====================");
+        DisplayText.text = displayMessage;
+        CleanUp();
+        if (win)
+        {
+            if (CurrentLevel.LevelNumber >= GameManager.Instance.MaxLevel - 1)
+            {
+                GameManager.Instance.MoveToVictory();
+            }
+            GameManager.Instance.UnlockLevel(CurrentLevel.LevelNumber + 1);
+        }
+        LevelSelectButton.gameObject.SetActive(true);
+        RestartButton.gameObject.SetActive(true);
     }
-
 
     // --- Core Mechanics Implementation ---
 
@@ -238,7 +283,7 @@ public class BattleManager : MonoBehaviour
             return false;
         }
         target.StackDisplay.UpdateToOrder(newOrder);
-        ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) successful");
+        // ConsoleInstance.Log($"swap({currentIndex} -> {targetIndex}) successful");
         return true;
     }
 
@@ -247,7 +292,7 @@ public class BattleManager : MonoBehaviour
         if (!executingAll && !CheckNextCardExecutable(source)) yield break;
         Card nextCard = source.Stack[0];
         source.CurrentEnergy -= nextCard.EnergyCost;
-        yield return StartCoroutine(source.StackDisplay.EnergyDisplay.SetEnergy(source.CurrentEnergy));
+        yield return StartCoroutine(source.StackDisplay.EnergyDisplayReference.SetActiveEnergy(source.CurrentEnergy));
 
         source.Stack.RemoveAt(0);
         ConsoleInstance.Log($"Executing: {nextCard.Title}");
@@ -267,6 +312,7 @@ public class BattleManager : MonoBehaviour
             else
             {
                 EndTurnButton.SetInteractible(true);
+                PauseButton.SetInteractible(true);
             }
         }
     }
@@ -320,13 +366,13 @@ public class BattleManager : MonoBehaviour
 
             case EffectType.ModEnergy:
                 target.CurrentEnergy += ResolveValue(source, effect.Values[0]);
-                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetEnergy(target.CurrentEnergy));
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplayReference.SetActiveEnergy(target.CurrentEnergy));
                 break;
 
             case EffectType.ModEnergyNextTurn:
                 int addAmount = ResolveValue(source, effect.Values[0]);
                 target.CarryOverEnergy += addAmount;
-                yield return StartCoroutine(target.StackDisplay.EnergyDisplay.SetTransparentEnergy(target.CarryOverEnergy));
+                yield return StartCoroutine(target.StackDisplay.EnergyDisplayReference.SetDimmedTempEnergy(target.CarryOverEnergy));
                 break;
 
             case EffectType.MakeUnswappable:
@@ -410,9 +456,18 @@ public class BattleManager : MonoBehaviour
         if (amount < 1) yield break;
         Assert.IsNotNull(target);
         ConsoleInstance.Log($"Adding {amount} {template.Title} to {target.Name}");
-        for (int i = 0; i < amount; i++)
+        for (int i = 0; i < amount; i++) // have to add card one at a time because adding changes state significantly
         {
-            int addIdx = target.Stack.ResolveIndex(mode, 1, target.ViewSize)[0];
+            List<int> addIndices = target.Stack.ResolveIndex(mode, 1, target.ViewSize);
+            int addIdx;
+            if (addIndices.Count == 0)
+            {
+                addIdx = 0; // because you can still add to an empty list (and you always add to the top)
+            }
+            else
+            {
+                addIdx = addIndices[0];
+            }
             Card newCard = new Card(template);
             target.Stack.Insert(addIdx, newCard);
             ConsoleInstance.Log($"added {newCard.Title} to {addIdx}");
@@ -435,6 +490,41 @@ public class BattleManager : MonoBehaviour
         Debug.Log($"handling swap command, {currentIndex}, {targetIndex}");
         SwapStack(targetEntity, currentIndex, targetIndex, false, true);
     }
+
+    void HandleLevelSelect()
+    {
+        GameManager.Instance.MoveToLevels();
+    }
+
+    void HandlePause()
+    {
+        GameManager.Instance.MoveToPause();
+    }
+
+    public void HandleRestart()
+    {
+        if (!GameIsOver)
+        {
+            GameOver(false, "", "");
+        }
+        LoadLevel(CurrentLevel);
+        GameManager.Instance.MoveToBattle();
+    }
+
+    public void HandleMainMenu()
+    {
+        if (!GameIsOver)
+        {
+            GameOver(false, "", "");
+        }
+        GameManager.Instance.MoveToStart();
+    }
+
+    void HandleWinCommand()
+    {
+        GameOver(true, "YOU WON BY CHEATING!", "CHEAT SUCCESSFUL");
+    }
+
     void ToggleConsole(InputAction.CallbackContext context)
     {
         Debug.Log($"Toggling Console to {!ConsoleInstance.gameObject.activeSelf}");
@@ -442,17 +532,10 @@ public class BattleManager : MonoBehaviour
     }
 
     // --- Helper Functions ---
-
-    void LoadDisplays()
+    void CleanUp()
     {
-        for (int i = 0; i < Player.Stack.Count; i++)
-        {
-            Player.StackDisplay.InsertCardNoAnim(Player.Stack[i]);
-        }
-        for (int i = 0; i < Enemy.Stack.Count; i++)
-        {
-            Enemy.StackDisplay.InsertCardNoAnim(Enemy.Stack[i]);
-        }
+        Player.StackDisplay.Clear();
+        Enemy.StackDisplay.Clear();
     }
 
     Entity ResolveTarget(Entity source, EffectTarget target)
@@ -479,7 +562,6 @@ public class BattleManager : MonoBehaviour
         {
             return value.Constant;
         }
-        // FIXME: finish this
         return 0;
     }
 
@@ -493,6 +575,7 @@ public class BattleManager : MonoBehaviour
         ExecuteNextButton.SetInteractible(interactible);
         EndTurnButton.SetInteractible(interactible);
         ExecuteAllButton.SetInteractible(interactible);
+        PauseButton.SetInteractible(interactible);
     }
 
     public string PrintDebugStatus()

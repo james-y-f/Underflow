@@ -43,7 +43,7 @@ public class CardController : MonoBehaviour
     void OnMouseOver()
     {
         if (!InView) return;
-        // TODO: display tooltip 
+        TooltipManager.Instance.ShowTooltip(Util.GetFullText(CardReference));
         Display.ShowSelectionHighlight();
         if (!Swappable || Held || !ParentStack.CardHoverable()) return;
         // prevents hovering over another card while holding a card
@@ -81,7 +81,7 @@ public class CardController : MonoBehaviour
     void OnMouseExit()
     {
         if (!InView) return;
-        // cancel tooltip 
+        TooltipManager.Instance.HideTooltip();
         Display.ResetColor();
         if (!Swappable || Held || !Hovering) return;
         // prevents exiting the card while holding

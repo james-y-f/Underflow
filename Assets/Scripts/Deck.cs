@@ -170,7 +170,7 @@ public class Deck : List<Card>
             case EffectMode.RandomFromDeck:
                 return SelectRandomListFromRange(0, Count, amount);
             case EffectMode.Bottom:
-                return Enumerable.Range(Math.Min(0, Count - amount), amount).ToList();
+                return Enumerable.Range(Math.Max(0, Count - amount), amount).ToList();
             default:
                 Debug.LogError("unable to resolve index");
                 return null;

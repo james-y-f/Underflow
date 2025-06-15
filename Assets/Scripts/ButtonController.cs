@@ -5,10 +5,12 @@ public class ButtonController : ColorController
 {
     public UnityEvent OnClick;
     [SerializeField] bool Interactible = true;
+    AudioSource ClickAudio;
 
     protected override void Awake()
     {
         base.Awake();
+        ClickAudio = gameObject.GetComponent<AudioSource>();
     }
 
     protected override void Start()
@@ -28,6 +30,7 @@ public class ButtonController : ColorController
         if (!Interactible) return;
         BlinkToColor(Constants.FlashHighlight);
         OnClick.Invoke();
+        ClickAudio.Play();
         Debug.Log("Clicked Button");
     }
 

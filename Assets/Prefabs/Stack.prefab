@@ -57,7 +57,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3165852589476695087}
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -0.22452867}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -65,8 +65,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.19767451, y: 0}
-  m_SizeDelta: {x: 2, y: 1}
+  m_AnchoredPosition: {x: 0, y: -0}
+  m_SizeDelta: {x: 1.7418, y: 0.2991}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &4645186940723354620
 MeshRenderer:
@@ -91,7 +91,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: -2418035939409249414, guid: 5585199bf70d640d696e28c421c109bf, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -133,10 +133,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sample text
+  m_text: 'Cards Left: 42'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 5585199bf70d640d696e28c421c109bf, type: 2}
+  m_sharedMaterial: {fileID: -2418035939409249414, guid: 5585199bf70d640d696e28c421c109bf, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -160,15 +160,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 3
-  m_fontSizeBase: 3
+  m_fontSize: 4
+  m_fontSizeBase: 4
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -198,7 +198,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0.35916805, w: 0.667765}
+  m_margin: {x: 0, y: 0, z: 0.002277732, w: 0.008207202}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0
@@ -376,7 +376,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be08493c377474cd4bb633bf846aaa79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  EnergyStonePrefab: {fileID: 1436666365584530208, guid: 07e84c8f9e5ad4b1caa2ad3e945225f6, type: 3}
+  BaseEnergyStonePrefab: {fileID: 1436666365584530208, guid: 2072f7a95e9db46a3bcad79eefe473b7, type: 3}
+  TempEnergyStonePrefab: {fileID: 1436666365584530208, guid: 07e84c8f9e5ad4b1caa2ad3e945225f6, type: 3}
+  TotalBaseEnergy: 0
 --- !u!1 &8457670106380050413
 GameObject:
   m_ObjectHideFlags: 0
@@ -432,7 +434,7 @@ MonoBehaviour:
       m_Calls: []
   Name: 
   DeckSwappable: 1
-  EnergyDisplay: {fileID: 0}
+  EnergyDisplayReference: {fileID: 0}
   CardPrefab: {fileID: 7433155785039710817, guid: 76f2b2a39ec604ecb85dced741aac7b4, type: 3}
   IsPlayer: 1
   CardObjects: []
